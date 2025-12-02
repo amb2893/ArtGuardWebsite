@@ -21,16 +21,13 @@ export default function LoginPage() {
             });
 
             if (res.ok) {
-                // Login successful
                 window.location.href = "/forums";
             } else {
-                // Try to read JSON error safely, fall back to text
                 let msg = "Invalid login";
                 try {
                     const json = await res.json();
                     msg = json?.error || json?.message || msg;
                 } catch {
-                    // non-json response (HTML) — show a generic message and advise checking server logs
                     msg = "Server returned non-JSON response. Check server logs.";
                 }
                 setError(msg);

@@ -10,9 +10,7 @@ const pool = new Pool({
     port: 5432,
 });
 
-
 // Articles
-
 export async function getArticles() {
     const res = await pool.query(
         "SELECT id, title, body, URL FROM articles ORDER BY created_at DESC"
@@ -20,8 +18,7 @@ export async function getArticles() {
     return res.rows;
 }
 
-
-// Get all forum posts
+// Forums
 export async function getForumPosts() {
     const res = await pool.query(
         `SELECT f.id, f.title, f.body, f.author_id, a.username, f.created_at
@@ -30,6 +27,17 @@ export async function getForumPosts() {
          ORDER BY f.created_at DESC`
     );
     return res.rows;
+}
+
+export async function getForumPost(postId: number) {
+    const res = await pool.query(
+        `SELECT f.id, f.title, f.body, f.author_id, a.username, f.created_at
+         FROM discussion_forum f
+         JOIN accounts a ON f.author_id = a.id
+         WHERE f.id = $1`,
+        [postId]
+    );
+    return res.rows[0];
 }
 
 // Create a forum post
@@ -50,6 +58,32 @@ export async function updateForumPost(postId: number, title: string, body: strin
     return res.rows[0];
 }
 
+// Comments
+export async function getCommentsByPost(postId: number) {
+    const res = await pool.query(
+        `SELECT c.id, c.post_id, c.author_id, a.username, c.body, c.created_at
+         FROM comments c
+         JOIN accounts a ON c.author_id = a.id
+         WHERE c.post_id = $1
+         ORDER BY c.created_at ASC`,
+        [postId]
+    );
+    return res.rows;
+}
+
+export async function addComment(postId: number, authorId: number, body: string) {
+    const res = await pool.query(
+        "INSERT INTO comments (post_id, author_id, body) VALUES ($1, $2, $3) RETURNING id, post_id, author_id, body, created_at",
+        [postId, authorId, body]
+    );
+
+    // Attach username
+    const comment = res.rows[0];
+    const userRes = await pool.query("SELECT username FROM accounts WHERE id = $1", [authorId]);
+    comment.username = userRes.rows[0]?.username ?? null;
+    return comment;
+}
+
 export async function getWebsites(): Promise<Website[]> {
     const res = await pool.query("SELECT id, website_name, report_count FROM websites ORDER BY website_name ASC");
     return res.rows;
@@ -59,6 +93,5 @@ export async function getWebsites(): Promise<Website[]> {
 export async function incrementReport(id: number) {
     await pool.query("UPDATE websites SET report_count = report_count + 1 WHERE id = $1", [id]);
 }
-
 
 export { pool };

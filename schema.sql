@@ -57,6 +57,34 @@ VALUES
     (1, 'Welcome to ArtGuard', 'This is the first discussion thread in our community.'),
 	(2, 'NightShade Use Cases', 'This is a discussion about NightShade and how we can use it.');
 
+
+-- Create comments table linked to discussion_forum and accounts (if not exists)
+CREATE TABLE IF NOT EXISTS comments (
+  id SERIAL PRIMARY KEY,
+  post_id INTEGER NOT NULL REFERENCES discussion_forum(id) ON DELETE CASCADE,
+  author_id INTEGER NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+  body TEXT NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Insert example comments for existing forum posts (adjust author selection if needed)
+WITH author AS (
+  SELECT id AS author_id FROM accounts WHERE username = 'admin' LIMIT 1
+),
+fallback AS (
+  SELECT id AS author_id FROM accounts LIMIT 1
+),
+chosen_author AS (
+  SELECT COALESCE((SELECT author_id FROM author), (SELECT author_id FROM fallback)) AS author_id
+),
+posts AS (
+  SELECT id FROM discussion_forum ORDER BY id
+)
+INSERT INTO comments (post_id, author_id, body)
+SELECT p.id, ca.author_id, 'Example comment for post #' || p.id || '. Welcome to the discussion!'
+FROM posts p
+CROSS JOIN chosen_author ca;
+
 -- ============================
 -- ARTICLES TABLE
 -- ============================
