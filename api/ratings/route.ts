@@ -1,21 +1,23 @@
-import { NextRequest, NextResponse } from "next/server";
-import { pool } from "../../lib/db";
+import { NextResponse } from "next/server";
+import { pool } from "@/lib/db";
 
-export async function GET(req: NextRequest) {
-    try {
-        const { searchParams } = new URL(req.url);
-        const search = searchParams.get("q") || "";
+export async function GET() {
+    const result = await pool.query("SELECT * FROM websites ORDER BY name ASC");
+    return NextResponse.json(result.rows);
+}
 
-        const result = await pool.query(
-            `SELECT website_name, report_count 
-       FROM websites 
-       WHERE website_name ILIKE $1
-       ORDER BY report_count DESC`,
-            [`%${search}%`]
-        );
+export async function POST(req: Request) {
+    const { id } = await req.json();
 
-        return NextResponse.json(result.rows);
-    } catch (err) {
-        return NextResponse.json({ error: "Server error" }, { status: 500 });
-    }
+    await pool.query(
+        "UPDATE websites SET reports = reports + 1 WHERE id = $1",
+        [id]
+    );
+
+    const updated = await pool.query(
+        "SELECT * FROM websites WHERE id = $1",
+        [id]
+    );
+
+    return NextResponse.json(updated.rows[0]);
 }
