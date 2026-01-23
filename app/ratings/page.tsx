@@ -7,8 +7,14 @@ export default async function RatingsPage() {
 
     async function handleReport(id: number) {
         "use server";
-        await incrementReport(id);
-        // Optionally trigger a revalidation or client refresh if you want live updates
+        try {
+            await incrementReport(id);
+            // Optionally trigger a revalidation or client refresh if you want live updates
+            return { success: true };
+        } catch (error) {
+            // Optionally log the error or transform it before rethrowing
+            throw error;
+        }
     }
 
     return (

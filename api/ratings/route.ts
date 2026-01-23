@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { pool } from "@/lib/db";
 
 export async function GET() {
-    const result = await pool.query("SELECT * FROM websites ORDER BY name ASC");
+    const result = await pool.query("SELECT * FROM websites ORDER BY website_name ASC");
     return NextResponse.json(result.rows);
 }
 
@@ -10,7 +10,7 @@ export async function POST(req: Request) {
     const { id } = await req.json();
 
     await pool.query(
-        "UPDATE websites SET reports = reports + 1 WHERE id = $1",
+        "UPDATE websites SET report_count = report_count + 1 WHERE id = $1",
         [id]
     );
 

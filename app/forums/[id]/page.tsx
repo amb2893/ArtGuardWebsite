@@ -13,14 +13,19 @@ export default async function ForumPostPage({
     const postId = Number(id);
     if (Number.isNaN(postId)) return <div>Invalid post id</div>;
 
-    const post: ForumPostType | undefined = await getForumPost(postId);
-    const comments: Comment[] = await getCommentsByPost(postId);
+    try {
+        const post: ForumPostType | undefined = await getForumPost(postId);
+        const comments: Comment[] = await getCommentsByPost(postId);
 
-    if (!post) return <div>Post not found</div>;
+        if (!post) return <div>Post not found</div>;
 
-    return (
-        <div className="p-4">
-            <ForumPageClient post={post} initialComments={comments} />
-        </div>
-    );
+        return (
+            <div className="p-4">
+                <ForumPageClient post={post} initialComments={comments} />
+            </div>
+        );
+    } catch (error) {
+        console.error("Failed to load forum post or comments:", error);
+        return <div>Failed to load post. Please try again later.</div>;
+    }
 }
