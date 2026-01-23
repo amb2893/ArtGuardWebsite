@@ -21,22 +21,27 @@ export default function LoginPage() {
             });
 
             if (res.ok) {
-                // Login successful
-                window.location.href = "/"; // redirect to homepage
+                window.location.href = "/forums";
             } else {
-                const data = await res.json();
-                setError(data.error || "Login failed");
+                let msg = "Invalid login";
+                try {
+                    const json = await res.json();
+                    msg = json?.error || json?.message || msg;
+                } catch {
+                    msg = "Server returned non-JSON response. Check server logs.";
+                }
+                setError(msg);
             }
         } catch (err) {
             console.error(err);
             setError("An unexpected error occurred");
+        } finally {
+            setLoading(false);
         }
-
-        setLoading(false);
     };
 
     return (
-        <div className="login-container">
+        <div className="login-container" style={{ padding: 40 }}>
             <h1>Login</h1>
             <form onSubmit={handleSubmit} className="login-form">
                 {error && <p className="error">{error}</p>}
@@ -48,6 +53,7 @@ export default function LoginPage() {
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                     required
+                    placeholder="username"
                 />
 
                 <label htmlFor="password">Password</label>
@@ -57,10 +63,11 @@ export default function LoginPage() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
+                    placeholder="password"
                 />
 
                 <button type="submit" disabled={loading}>
-                    {loading ? "Logging in..." : "Login"}
+                    {loading ? "Logging in..." : "Log In"}
                 </button>
             </form>
         </div>

@@ -2,28 +2,37 @@
 "use client";
 
 import React, { useState } from "react";
+import { Website } from "@/lib/types";
+import WebsiteList from "./WebsiteList";
 
-export default function SearchRatings({ websites }: { websites: { id: number; website_name: string; report_count: number; }[] }) {
+interface SearchRatingsProps {
+    websites: Website[];
+    onReport: (id: number) => void;
+}
+
+export default function SearchRatings({ websites, onReport }: SearchRatingsProps) {
     const [query, setQuery] = useState("");
 
-    const filtered = websites.filter((w) => w.website_name.toLowerCase().includes(query.toLowerCase()));
+    const filtered = websites.filter((w) =>
+        w.website_name.toLowerCase().includes(query.toLowerCase())
+    );
 
     return (
-        <div>
+        <div style={{ marginBottom: "1rem" }}>
             <input
                 type="text"
                 placeholder="Search websites..."
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                style={{ marginBottom: "10px" }}
+                style={{
+                    padding: "0.5rem",
+                    width: "100%",
+                    borderRadius: "4px",
+                    border: "1px solid #ccc",
+                    marginBottom: "1rem"
+                }}
             />
-            <ul>
-                {filtered.map((site) => (
-                    <li key={site.id}>
-                        <strong>{site.website_name}</strong>: {site.report_count} reports
-                    </li>
-                ))}
-            </ul>
+            <WebsiteList websites={filtered} onReport={onReport} />
         </div>
     );
 }
