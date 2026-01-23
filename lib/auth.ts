@@ -1,47 +1,48 @@
 import bcrypt from "bcrypt";
-import jwt from "jsonwebtoken";
-import { NextResponse } from "next/server";
+import jwt, { JwtPayload } from "jsonwebtoken";
 import { pool } from "./db";
+
+export interface User {
+    id: number;
+    username: string;
+}
 
 const JWT_SECRET = process.env.JWT_SECRET || "supersecret";
 
-export async function loginUser(username: string, password: string) {
-    const res = await pool.query("SELECT * FROM accounts WHERE username=$1", [username]);
-    const user = res.rows[0];
-
-    if (!user) throw new Error("User not found");
-
-    const isValid = await bcrypt.compare(password, user.password_hash);
-    if (!isValid) throw new Error("Invalid password");
-
-    const token = jwt.sign({ id: user.id, username: user.username }, JWT_SECRET, { expiresIn: "7d" });
-    return token;
-}
-
-export function verifyToken(token: string) {
-    try {
-        return jwt.verify(token, JWT_SECRET);
-    } catch {
-        return null;
-    }
-}
-
-export async function validateUser(username: string, password: string) {
+export async function authenticateUser(username: string, password: string): Promise<User | null> {
     const res = await pool.query(
         "SELECT id, username, password_hash FROM accounts WHERE username = $1",
         [username]
     );
 
-    const user = res.rows[0];
-    if (!user) return null;
+    if (res.rows.length === 0) return null;
 
-    const isValid = await bcrypt.compare(password, user.password_hash);
-    if (!isValid) return null;
+    const userRow = res.rows[0];
+    const match = await bcrypt.compare(password, userRow.password_hash);
+    if (!match) return null;
 
-    // generate a token for the user
-    const token = jwt.sign({ id: user.id, username: user.username }, JWT_SECRET, {
-        expiresIn: "1d",
-    });
+    return { id: userRow.id, username: userRow.username };
+}
 
-    return { ...user, token };
+export function generateToken(user: User): string {
+    return jwt.sign({ id: user.id, username: user.username }, JWT_SECRET, { expiresIn: "7d" });
+}
+
+export function verifyToken(token: string): User | null {
+    try {
+        const decoded = jwt.verify(token, JWT_SECRET);
+        if (!decoded || typeof decoded !== "object") return null;
+        const payload = decoded as JwtPayload & { id?: number | string; username?: string };
+
+        if (typeof payload.id === "number" && typeof payload.username === "string") {
+            return { id: payload.id, username: payload.username };
+        }
+        if (typeof payload.id === "string" && typeof payload.username === "string") {
+            const idNum = Number(payload.id);
+            if (!Number.isNaN(idNum)) return { id: idNum, username: payload.username };
+        }
+        return null;
+    } catch {
+        return null;
+    }
 }
