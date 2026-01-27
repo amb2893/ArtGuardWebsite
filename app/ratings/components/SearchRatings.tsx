@@ -7,10 +7,9 @@ import WebsiteList from "./WebsiteList";
 
 interface SearchRatingsProps {
     websites: Website[];
-    onReport: (id: number) => void;
 }
 
-export default function SearchRatings({ websites, onReport }: SearchRatingsProps) {
+export default function SearchRatings({ websites }: SearchRatingsProps) {
     const [query, setQuery] = useState("");
 
     const filtered = websites.filter((w) =>
@@ -18,21 +17,15 @@ export default function SearchRatings({ websites, onReport }: SearchRatingsProps
     );
 
     return (
-        <div style={{ marginBottom: "1rem" }}>
+        <div>
             <input
                 type="text"
                 placeholder="Search websites..."
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                style={{
-                    padding: "0.5rem",
-                    width: "100%",
-                    borderRadius: "4px",
-                    border: "1px solid #ccc",
-                    marginBottom: "1rem"
-                }}
+                className="p-2 w-full border rounded mb-4"
             />
-            <WebsiteList websites={filtered} onReport={onReport} />
+            <WebsiteList websites={filtered} />
         </div>
     );
 }

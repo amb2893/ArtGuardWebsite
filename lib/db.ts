@@ -89,6 +89,51 @@ export async function getWebsites(): Promise<Website[]> {
     return res.rows;
 }
 
+// Get a single website by ID
+export async function getWebsite(websiteId: number) {
+    const res = await pool.query(
+        "SELECT id, website_name, report_count FROM websites WHERE id = $1",
+        [websiteId]
+    );
+    return res.rows[0];
+}
+
+// Get all ratings for a website with aggregated stats
+export async function getWebsiteRatings(websiteId: number) {
+    const res = await pool.query(
+        `SELECT 
+            COUNT(CASE WHEN rating = 1 THEN 1 END) as positive_count,
+            COUNT(CASE WHEN rating = -1 THEN 1 END) as negative_count,
+            COUNT(*) as total_ratings
+         FROM ratings 
+         WHERE website_id = $1`,
+        [websiteId]
+    );
+    return res.rows[0];
+}
+
+// Get user's rating for a specific website (if exists)
+export async function getUserRating(websiteId: number, userId: number) {
+    const res = await pool.query(
+        "SELECT * FROM ratings WHERE website_id = $1 AND user_id = $2",
+        [websiteId, userId]
+    );
+    return res.rows[0];
+}
+
+// Create or update a rating (upsert)
+export async function createOrUpdateRating(websiteId: number, userId: number, rating: number) {
+    const res = await pool.query(
+        `INSERT INTO ratings (website_id, user_id, rating) 
+         VALUES ($1, $2, $3)
+         ON CONFLICT (website_id, user_id) 
+         DO UPDATE SET rating = $3, created_at = NOW()
+         RETURNING *`,
+        [websiteId, userId, rating]
+    );
+    return res.rows[0];
+}
+
 // Increment report count
 export async function incrementReport(id: number) {
     await pool.query("UPDATE websites SET report_count = report_count + 1 WHERE id = $1", [id]);

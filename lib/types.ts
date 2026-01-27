@@ -5,6 +5,14 @@ export interface Website {
     report_count: number;
 }
 
+export interface Rating {
+    id: number;
+    website_id: number;
+    user_id: number;
+    rating: number; // 1 for positive, -1 for negative
+    created_at: string;
+}
+
 export interface ForumPost {
     id: number;
     title: string;

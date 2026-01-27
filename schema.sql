@@ -86,6 +86,18 @@ FROM posts p
 CROSS JOIN chosen_author ca;
 
 -- ============================
+-- RATINGS TABLE
+-- ============================
+CREATE TABLE IF NOT EXISTS ratings (
+  id SERIAL PRIMARY KEY,
+  website_id INTEGER NOT NULL REFERENCES websites(id) ON DELETE CASCADE,
+  user_id INTEGER NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+  rating INTEGER NOT NULL CHECK (rating IN (1, -1)), -- 1 for positive, -1 for negative
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE(website_id, user_id) -- A user can only rate a website once
+);
+
+-- ============================
 -- ARTICLES TABLE
 -- ============================
 DROP TABLE IF EXISTS articles;
