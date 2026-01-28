@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createUser, generateToken } from "../../lib/auth";
+import { createUser, generateToken } from "../../../lib/auth";
 
 export async function POST(req: NextRequest) {
   try {

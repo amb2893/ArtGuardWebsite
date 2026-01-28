@@ -1,75 +1,81 @@
 "use client";
 
 import React, { useState } from "react";
+import Link from "next/link";
 
 export default function LoginPage() {
-    const [username, setUsername] = useState("");
-    const [password, setPassword] = useState("");
-    const [error, setError] = useState("");
-    const [loading, setLoading] = useState(false);
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setLoading(true);
-        setError("");
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
 
+    try {
+      const res = await fetch("/api/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password }),
+      });
+
+      if (res.ok) {
+        window.location.href = "/forums";
+      } else {
+        let msg = "Invalid login";
         try {
-            const res = await fetch("/api/login", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ username, password }),
-            });
-
-            if (res.ok) {
-                window.location.href = "/forums";
-            } else {
-                let msg = "Invalid login";
-                try {
-                    const json = await res.json();
-                    msg = json?.error || json?.message || msg;
-                } catch {
-                    msg = "Server returned non-JSON response. Check server logs.";
-                }
-                setError(msg);
-            }
-        } catch (err) {
-            console.error(err);
-            setError("An unexpected error occurred");
-        } finally {
-            setLoading(false);
+          const json = await res.json();
+          msg = json?.error || json?.message || msg;
+        } catch {
+          msg = "Server returned non-JSON response. Check server logs.";
         }
-    };
+        setError(msg);
+      }
+    } catch (err) {
+      console.error(err);
+      setError("An unexpected error occurred");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    return (
-        <div className="login-container" style={{ padding: 40 }}>
-            <h1>Login</h1>
-            <form onSubmit={handleSubmit} className="login-form">
-                {error && <p className="error">{error}</p>}
+  return (
+    <div className="login-container" style={{ padding: 40 }}>
+      <h1>Login</h1>
 
-                <label htmlFor="username">Username</label>
-                <input
-                    type="text"
-                    id="username"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    required
-                    placeholder="username"
-                />
+      <form onSubmit={handleSubmit} className="login-form">
+        {error && <p className="error">{error}</p>}
 
-                <label htmlFor="password">Password</label>
-                <input
-                    type="password"
-                    id="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    placeholder="password"
-                />
+        <label htmlFor="username">Username</label>
+        <input
+          type="text"
+          id="username"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+          required
+          placeholder="username"
+        />
 
-                <button type="submit" disabled={loading}>
-                    {loading ? "Logging in..." : "Log In"}
-                </button>
-            </form>
-        </div>
-    );
+        <label htmlFor="password">Password</label>
+        <input
+          type="password"
+          id="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+          placeholder="password"
+        />
+
+        <button type="submit" disabled={loading}>
+          {loading ? "Logging in..." : "Log In"}
+        </button>
+      </form>
+
+      <p style={{ textAlign: "center", marginTop: "1rem" }}>
+        New user? <Link href="/signup">Sign up for an account.</Link>
+      </p>
+    </div>
+  );
 }
