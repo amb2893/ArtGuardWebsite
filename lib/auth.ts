@@ -24,6 +24,35 @@ export async function authenticateUser(username: string, password: string): Prom
     return { id: userRow.id, username: userRow.username };
 }
 
+export async function createUser(username: string, password: string): Promise<User> {
+  const usrname = username.trim();
+
+  if (!usrname) throw new Error("INVALID_USERNAME");
+  if (password.length < 8) throw new Error("WEAK_PASSWORD");
+
+  const passwordHash = await bcrypt.hash(password, 12);
+
+  try {
+    const res = await pool.query(
+      `INSERT INTO accounts (username, password_hash)
+       VALUES ($1, $2)
+       RETURNING id, username`,
+      [usrname, passwordHash]
+    );
+
+    return { id: res.rows[0].id, username: res.rows[0].username };
+  } catch (err: any) {
+    //username already exists
+    if (err?.code === "23505") {
+      const e: any = new Error("USER_EXISTS");
+      e.code = "USER_EXISTS";
+      throw e;
+    }
+    throw err;
+  }
+}
+
+
 export function generateToken(user: User): string {
     return jwt.sign({ id: user.id, username: user.username }, JWT_SECRET, { expiresIn: "7d" });
 }

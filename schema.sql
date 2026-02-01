@@ -1,4 +1,5 @@
 
+
 -- ============================
 -- Database Schema for ArtGuard
 -- PostgreSQL SQL File
@@ -34,11 +35,33 @@ CREATE TABLE websites (
     report_count INTEGER DEFAULT 0
 );
 
+
 -- Optional sample records
 INSERT INTO websites (website_name, report_count)
 VALUES
     ('example.com', 3),
     ('artstealer.net', 12);
+	
+-- ============================
+-- Additional Sample Websites
+-- ============================
+INSERT INTO websites (website_name, report_count)
+VALUES
+    ('artshare.io', 1),
+    ('openportfolio.org', 0),
+    ('aiartlab.fake', 18),
+    ('creatorshub.test', 2),
+    ('promptvault.xyz', 9),
+    ('digitalcanvas.app', 0),
+    ('scrapeart.ai', 25),
+    ('fairgallery.co', 0),
+    ('imageharvester.net', 14),
+    ('artistfirst.social', 0),
+    ('modeltrainers.ai', 21),
+    ('ethicalpixels.org', 0),
+    ('stockbrush.fake', 6),
+    ('nocreditart.com', 30),
+    ('opensourceart.dev', 0);
 
 -- ============================
 -- DISCUSSION FORUM TABLE
@@ -55,35 +78,45 @@ CREATE TABLE discussion_forum (
 INSERT INTO discussion_forum (author_id, title, body)
 VALUES
     (1, 'Welcome to ArtGuard', 'This is the first discussion thread in our community.'),
-	(2, 'NightShade Use Cases', 'This is a discussion about NightShade and how we can use it.');
+	(2, 'NightShade UseCa', 'This is the first discussion thread in our community.');
 
 
--- Create comments table linked to discussion_forum and accounts (if not exists)
-CREATE TABLE IF NOT EXISTS comments (
+CREATE TABLE IF NOT EXISTS ratings (
   id SERIAL PRIMARY KEY,
-  post_id INTEGER NOT NULL REFERENCES discussion_forum(id) ON DELETE CASCADE,
-  author_id INTEGER NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
-  body TEXT NOT NULL,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  website_id INTEGER NOT NULL REFERENCES websites(id) ON DELETE CASCADE,
+  user_id INTEGER NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+  rating INTEGER NOT NULL CHECK (rating IN (1, -1)),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE(website_id, user_id)
 );
 
--- Insert example comments for existing forum posts (adjust author selection if needed)
-WITH author AS (
-  SELECT id AS author_id FROM accounts WHERE username = 'admin' LIMIT 1
-),
-fallback AS (
-  SELECT id AS author_id FROM accounts LIMIT 1
-),
-chosen_author AS (
-  SELECT COALESCE((SELECT author_id FROM author), (SELECT author_id FROM fallback)) AS author_id
-),
-posts AS (
-  SELECT id FROM discussion_forum ORDER BY id
-)
-INSERT INTO comments (post_id, author_id, body)
-SELECT p.id, ca.author_id, 'Example comment for post #' || p.id || '. Welcome to the discussion!'
-FROM posts p
-CROSS JOIN chosen_author ca;
+-- ============================
+-- Seed Ratings (Fake Data)
+-- ============================
+
+-- Admin ratings
+INSERT INTO ratings (website_id, user_id, rating)
+SELECT w.id, a.id,
+       CASE
+           WHEN w.report_count = 0 THEN 1
+           WHEN w.report_count < 5 THEN 1
+           ELSE -1
+       END
+FROM websites w
+JOIN accounts a ON a.username = 'admin'
+ON CONFLICT DO NOTHING;
+
+-- Test user ratings (more opinionated)
+INSERT INTO ratings (website_id, user_id, rating)
+SELECT w.id, a.id,
+       CASE
+           WHEN w.report_count > 10 THEN -1
+           ELSE 1
+       END
+FROM websites w
+JOIN accounts a ON a.username = 'testuser'
+ON CONFLICT DO NOTHING;
+
 
 -- ============================
 -- ARTICLES TABLE
@@ -106,7 +139,7 @@ VALUES
     ('The Impact of AI on Modern Art', 'Artificial intelligence is reshaping how artists create, interpret, and monetize their work. This article explores both the benefits and challenges.', 'placeholder1'),
     ('Understanding Copyright in Digital Art', 'Digital art raises unique copyright issues. Learn how to protect your creations and navigate online platforms safely.','placeholder2');
 
-
 UPDATE accounts SET password_hash = '$2b$10$mUo5MN1YQox3PMU/7FGmR.iwSNU0D44WcAFgkmrTNlce.9gT4htUK' WHERE username = 'admin';
 	SELECT id, username, password_hash FROM accounts ORDER BY id;
 SELECT * FROM accounts WHERE username = 'admin';
+
