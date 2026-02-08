@@ -37,7 +37,7 @@ export default async function WebsitePage({
         }
 
         return (
-            <div className="p-4">
+            <div>
                 <WebsitePageClient 
                     website={website} 
                     ratingsData={ratingsData}

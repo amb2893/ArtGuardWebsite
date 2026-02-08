@@ -2,9 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { getCommentsByPost, addComment } from "../../../../../lib/db";
 import { verifyToken } from "../../../../../lib/auth";
 
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
     try {
-        const id = Number(params.id);
+        const { id: idParam } = await params;
+        const id = Number(idParam);
         if (Number.isNaN(id)) return NextResponse.json({ error: "Invalid id" }, { status: 400 });
 
         const comments = await getCommentsByPost(id);
@@ -15,9 +16,10 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     }
 }
 
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
     try {
-        const id = Number(params.id);
+        const { id: idParam } = await params;
+        const id = Number(idParam);
         if (Number.isNaN(id)) return NextResponse.json({ error: "Invalid id" }, { status: 400 });
 
         const bodyJson = await req.json();

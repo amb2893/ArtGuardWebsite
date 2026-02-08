@@ -9,21 +9,28 @@ interface Props {
 
 export default function WebsiteList({ websites }: Props) {
     if (websites.length === 0) {
-        return <div>No websites found.</div>;
+        return (
+            <div className="no-results-message">
+                <p>No websites found.</p>
+            </div>
+        );
     }
 
     return (
-        <div className="space-y-4">
-            {websites.map((website) => (
-                <Link key={website.id} href={`/ratings/${website.id}`} className="block">
-                    <div className="p-4 border rounded hover:bg-gray-50 cursor-pointer">
-                        <h3 className="text-lg font-semibold">{website.website_name}</h3>
-                        <div className="text-sm text-gray-600 mt-2">
-                            Reports: {website.report_count}
+        <div className="search-results-container">
+            <h2 className="search-results-title">Search Results</h2>
+            <div className="search-results-grid">
+                {websites.map((website) => (
+                    <Link key={website.id} href={`/ratings/${website.id}`} className="search-result-link">
+                        <div className="search-result-card">
+                            <h3 className="search-result-card-title">{website.website_name}</h3>
+                            <div className="search-result-card-count">
+                                {website.report_count} {website.report_count === 1 ? 'rating' : 'ratings'}
+                            </div>
                         </div>
-                    </div>
-                </Link>
-            ))}
+                    </Link>
+                ))}
+            </div>
         </div>
     );
 }

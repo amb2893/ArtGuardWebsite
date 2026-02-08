@@ -22,7 +22,7 @@ export default function LoginPage() {
       });
 
       if (res.ok) {
-        window.location.href = "/forums";
+        window.location.href = "/";
       } else {
         let msg = "Invalid login";
         try {
