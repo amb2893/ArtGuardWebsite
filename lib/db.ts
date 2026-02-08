@@ -85,14 +85,30 @@ export async function addComment(postId: number, authorId: number, body: string)
 }
 
 export async function getWebsites(): Promise<Website[]> {
-    const res = await pool.query("SELECT id, website_name, report_count FROM websites ORDER BY website_name ASC");
+    const res = await pool.query(`
+        SELECT 
+            w.id, 
+            w.website_name, 
+            COALESCE(COUNT(r.id), 0)::INTEGER as report_count
+        FROM websites w
+        LEFT JOIN ratings r ON w.id = r.website_id
+        GROUP BY w.id, w.website_name
+        ORDER BY w.website_name ASC
+    `);
     return res.rows;
 }
 
 // Get a single website by ID
 export async function getWebsite(websiteId: number) {
     const res = await pool.query(
-        "SELECT id, website_name, report_count FROM websites WHERE id = $1",
+        `SELECT 
+            w.id, 
+            w.website_name, 
+            COALESCE(COUNT(r.id), 0)::INTEGER as report_count
+        FROM websites w
+        LEFT JOIN ratings r ON w.id = r.website_id
+        WHERE w.id = $1
+        GROUP BY w.id, w.website_name`,
         [websiteId]
     );
     return res.rows[0];
@@ -137,6 +153,39 @@ export async function createOrUpdateRating(websiteId: number, userId: number, ra
 // Increment report count
 export async function incrementReport(id: number) {
     await pool.query("UPDATE websites SET report_count = report_count + 1 WHERE id = $1", [id]);
+}
+
+// Get recently rated websites (top 3)
+export async function getRecentlyRatedWebsites(): Promise<Website[]> {
+    const res = await pool.query(`
+        SELECT 
+            w.id, 
+            w.website_name, 
+            COALESCE(COUNT(r.id), 0)::INTEGER as report_count,
+            MAX(r.created_at) as last_rated
+        FROM websites w
+        INNER JOIN ratings r ON w.id = r.website_id
+        GROUP BY w.id, w.website_name
+        ORDER BY last_rated DESC
+        LIMIT 3
+    `);
+    return res.rows;
+}
+
+// Get top rated websites by number of ratings (top 3)
+export async function getTopRatedWebsites(): Promise<Website[]> {
+    const res = await pool.query(`
+        SELECT 
+            w.id, 
+            w.website_name, 
+            COUNT(r.id)::INTEGER as report_count
+        FROM websites w
+        INNER JOIN ratings r ON w.id = r.website_id
+        GROUP BY w.id, w.website_name
+        ORDER BY report_count DESC
+        LIMIT 3
+    `);
+    return res.rows;
 }
 
 export { pool };

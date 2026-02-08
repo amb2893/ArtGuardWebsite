@@ -152,6 +152,75 @@ label {
 /* ==========================
    Ratings Page
 ========================== */
+
+/* Ratings Hero Section with Black Background */
+.ratings-hero {
+    background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+    color: white;
+    padding: 4rem 2rem 3rem;
+    text-align: center;
+    border-bottom: 3px solid #ff1654;
+}
+
+.ratings-hero-content {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.ratings-hero-title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 3rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    color: white;
+    letter-spacing: 0.5px;
+}
+
+.ratings-hero-desc {
+    font-size: 1.2rem;
+    color: #e0e0e0;
+    margin-bottom: 0;
+}
+
+/* Main Content Area */
+.ratings-main-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+    background-color: #f7f7f7;
+    min-height: calc(100vh - 400px);
+}
+
+/* Search Container with Dark Theme */
+.ratings-search-container {
+    background: linear-gradient(135deg, #2d2d2d 0%, #1a1a1a 100%);
+    padding: 2rem;
+    border-radius: 12px;
+    margin-bottom: 3rem;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+}
+
+.ratings-search-input {
+    width: 100%;
+    padding: 1rem 1.5rem;
+    font-size: 1.1rem;
+    border: 2px solid #444;
+    border-radius: 8px;
+    background-color: #fff;
+    color: #1a1a1a;
+    transition: all 0.3s;
+    outline: none;
+}
+
+.ratings-search-input::placeholder {
+    color: #999;
+}
+
+.ratings-search-input:focus {
+    border-color: #ff1654;
+    box-shadow: 0 0 0 3px rgba(255, 22, 84, 0.1);
+}
+
 .ratings-container {
     max-width: 800px;
     margin: 1rem auto;
@@ -159,6 +228,437 @@ label {
     background-color: #fff;
     border-radius: 0.5rem;
     box-shadow: 0 3px 6px rgba(0,0,0,0.05);
+}
+
+/* Recently Rated Section */
+.recently-rated-section {
+    margin-bottom: 3rem;
+    text-align: center;
+}
+
+.recently-rated-title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 2rem;
+    color: #1a1a1a;
+    position: relative;
+    display: inline-block;
+}
+
+.recently-rated-title::after {
+    content: '';
+    position: absolute;
+    bottom: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60px;
+    height: 3px;
+    background: linear-gradient(90deg, #ff1654, #e00a44);
+    border-radius: 2px;
+}
+
+.recently-rated-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+    max-width: 1100px;
+    margin: 0 auto;
+}
+
+.recently-rated-link {
+    display: block;
+    text-decoration: none;
+}
+
+.recently-rated-card {
+    background-color: #fff;
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    transition: all 0.3s;
+    height: 100%;
+    border: 2px solid transparent;
+}
+
+.recently-rated-card:hover {
+    box-shadow: 0 8px 24px rgba(255, 22, 84, 0.15);
+    transform: translateY(-4px);
+    border-color: #ff1654;
+}
+
+.recently-rated-card-title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #1a1a1a;
+    margin-bottom: 1rem;
+}
+
+.recently-rated-card-count {
+    font-size: 0.95rem;
+    color: #666;
+    font-weight: 500;
+}
+
+/* ==========================
+   Website Detail Page
+========================== */
+
+/* Hero Section for Individual Website */
+.website-detail-hero {
+    background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+    color: white;
+    padding: 4rem 2rem 3rem;
+    text-align: center;
+    border-bottom: 3px solid #ff1654;
+}
+
+.website-detail-hero-content {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.website-detail-title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    color: white;
+    letter-spacing: 0.5px;
+}
+
+.website-detail-count {
+    font-size: 1.1rem;
+    color: #e0e0e0;
+    font-weight: 500;
+}
+
+/* Main Content Area */
+.website-detail-main {
+    background-color: #f7f7f7;
+    min-height: calc(100vh - 300px);
+    padding: 3rem 2rem;
+}
+
+.website-detail-container {
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+/* Rating Cards */
+.website-ratings-card,
+.website-rate-card {
+    background: white;
+    border-radius: 12px;
+    padding: 2.5rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    border: 2px solid #f0f0f0;
+    transition: border-color 0.3s;
+}
+
+.website-ratings-card:hover,
+.website-rate-card:hover {
+    border-color: #ff1654;
+}
+
+.website-card-title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin-bottom: 2rem;
+    position: relative;
+    padding-bottom: 0.75rem;
+}
+
+.website-card-title::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 60px;
+    height: 3px;
+    background: linear-gradient(90deg, #ff1654, #e00a44);
+    border-radius: 2px;
+}
+
+/* Rating Bars */
+.ratings-bars-container {
+    margin-bottom: 2rem;
+}
+
+.rating-bar-item {
+    margin-bottom: 1.5rem;
+}
+
+.rating-bar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+}
+
+.rating-label {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #333;
+}
+
+.rating-stats {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.rating-count {
+    font-size: 0.95rem;
+    color: #666;
+    font-weight: 500;
+}
+
+.rating-percentage {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #1a1a1a;
+}
+
+.rating-bar-track {
+    width: 100%;
+    height: 12px;
+    background-color: #e5e7eb;
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.rating-bar-fill {
+    height: 100%;
+    transition: width 0.5s ease;
+    border-radius: 6px;
+}
+
+.rating-bar-positive {
+    background: linear-gradient(90deg, #10b981, #059669);
+}
+
+.rating-bar-negative {
+    background: linear-gradient(90deg, #ef4444, #dc2626);
+}
+
+.total-ratings-display {
+    font-size: 1rem;
+    color: #666;
+    padding-top: 1rem;
+    border-top: 2px solid #f0f0f0;
+}
+
+.total-ratings-display strong {
+    color: #1a1a1a;
+    font-weight: 700;
+}
+
+/* Current Rating Badge */
+.current-rating-badge {
+    background: linear-gradient(135deg, #f0f0f0, #e0e0e0);
+    color: #333;
+    padding: 0.75rem 1.25rem;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+    font-weight: 600;
+    text-align: center;
+    border: 2px solid #d0d0d0;
+}
+
+/* Rate Buttons */
+.rate-buttons-container {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.rate-button {
+    flex: 1;
+    padding: 1.25rem 1.5rem;
+    border-radius: 10px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    border: 2px solid;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.rate-button-icon {
+    font-size: 1.5rem;
+}
+
+.rate-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.rate-button-positive {
+    background-color: #f0fdf4;
+    color: #15803d;
+    border-color: #86efac;
+}
+
+.rate-button-positive:hover:not(:disabled) {
+    background-color: #dcfce7;
+    border-color: #4ade80;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+}
+
+.rate-button-positive.rate-button-active {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+    border-color: #059669;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.rate-button-negative {
+    background-color: #fef2f2;
+    color: #991b1b;
+    border-color: #fca5a5;
+}
+
+.rate-button-negative:hover:not(:disabled) {
+    background-color: #fee2e2;
+    border-color: #f87171;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
+}
+
+.rate-button-negative.rate-button-active {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: white;
+    border-color: #dc2626;
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+.rate-help-text {
+    font-size: 0.95rem;
+    color: #666;
+    text-align: center;
+    font-style: italic;
+}
+
+/* Back Link */
+.back-link-container {
+    text-align: center;
+    margin-top: 2rem;
+}
+
+.back-link-button {
+    font-size: 1rem;
+    color: #ff1654;
+    font-weight: 600;
+    background: transparent;
+    border: 2px solid #ff1654;
+    padding: 0.75rem 2rem;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.back-link-button:hover {
+    background: #ff1654;
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(255, 22, 84, 0.2);
+}
+
+/* ==========================
+   Search Results Styling
+========================== */
+
+.search-results-container {
+    margin-top: 2rem;
+}
+
+.search-results-title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 2rem;
+    color: #1a1a1a;
+    text-align: center;
+    position: relative;
+    display: inline-block;
+    width: 100%;
+}
+
+.search-results-title::after {
+    content: '';
+    position: absolute;
+    bottom: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60px;
+    height: 3px;
+    background: linear-gradient(90deg, #ff1654, #e00a44);
+    border-radius: 2px;
+}
+
+.search-results-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+.search-result-link {
+    display: block;
+    text-decoration: none;
+}
+
+.search-result-card {
+    background-color: #fff;
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    transition: all 0.3s;
+    height: 100%;
+    border: 2px solid transparent;
+}
+
+.search-result-card:hover {
+    box-shadow: 0 8px 24px rgba(255, 22, 84, 0.15);
+    transform: translateY(-4px);
+    border-color: #ff1654;
+}
+
+.search-result-card-title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #1a1a1a;
+    margin-bottom: 1rem;
+}
+
+.search-result-card-count {
+    font-size: 0.95rem;
+    color: #666;
+    font-weight: 500;
+}
+
+.no-results-message {
+    text-align: center;
+    padding: 3rem 2rem;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    margin-top: 2rem;
+}
+
+.no-results-message p {
+    font-size: 1.1rem;
+    color: #666;
+    font-weight: 500;
 }
 
     .ratings-container table {

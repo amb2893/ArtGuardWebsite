@@ -24,7 +24,7 @@ export default function WebsitePageClient({ website, ratingsData, userRating: in
     async function handleRate(rating: number) {
         setIsRating(true);
         try {
-            const response = await fetch(`/app/api/ratings`, {
+            const response = await fetch(`/api/ratings`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ 
@@ -78,92 +78,104 @@ export default function WebsitePageClient({ website, ratingsData, userRating: in
 
     return (
         <div>
-            <div className="mb-6">
-                <h1 className="text-3xl font-bold mb-2">{website.website_name}</h1>
-                <div className="text-gray-600">
-                    Report Count: {website.report_count}
+            <div className="website-detail-hero">
+                <div className="website-detail-hero-content">
+                    <h1 className="website-detail-title">{website.website_name}</h1>
+                    <div className="website-detail-count">
+                        {website.report_count} {website.report_count === 1 ? 'rating' : 'ratings'}
+                    </div>
                 </div>
             </div>
 
-            <div className="bg-white p-6 rounded-lg shadow-md mb-6">
-                <h2 className="text-xl font-semibold mb-4">Community Ratings</h2>
-                
-                <div className="mb-4">
-                    <div className="flex justify-between items-center mb-2">
-                        <span className="text-sm font-medium">Positive ({positiveCount})</span>
-                        <span className="text-sm text-gray-600">{positivePercentage}%</span>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2.5">
-                        <div 
-                            className="bg-green-600 h-2.5 rounded-full" 
-                            style={{ width: `${positivePercentage}%` }}
-                        ></div>
-                    </div>
-                </div>
+            <div className="website-detail-main">
+                <div className="website-detail-container">
+                    <div className="website-ratings-card">
+                        <h2 className="website-card-title">Community Ratings</h2>
+                        
+                        <div className="ratings-bars-container">
+                            <div className="rating-bar-item">
+                                <div className="rating-bar-header">
+                                    <span className="rating-label">👍 Positive</span>
+                                    <div className="rating-stats">
+                                        <span className="rating-count">{positiveCount}</span>
+                                        <span className="rating-percentage">{positivePercentage}%</span>
+                                    </div>
+                                </div>
+                                <div className="rating-bar-track">
+                                    <div 
+                                        className="rating-bar-fill rating-bar-positive" 
+                                        style={{ width: `${positivePercentage}%` }}
+                                    ></div>
+                                </div>
+                            </div>
 
-                <div className="mb-6">
-                    <div className="flex justify-between items-center mb-2">
-                        <span className="text-sm font-medium">Negative ({negativeCount})</span>
-                        <span className="text-sm text-gray-600">{100 - positivePercentage}%</span>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2.5">
-                        <div 
-                            className="bg-red-600 h-2.5 rounded-full" 
-                            style={{ width: `${100 - positivePercentage}%` }}
-                        ></div>
-                    </div>
-                </div>
-
-                <div className="text-sm text-gray-600 mb-4">
-                    Total Ratings: {totalRatings}
-                </div>
-
-                <div className="border-t pt-4">
-                    <h3 className="text-lg font-semibold mb-3">Rate this website</h3>
-                    {userRating !== null && (
-                        <div className="text-sm text-gray-600 mb-2">
-                            Your current rating: {userRating === 1 ? "👍 Positive" : "👎 Negative"}
+                            <div className="rating-bar-item">
+                                <div className="rating-bar-header">
+                                    <span className="rating-label">👎 Negative</span>
+                                    <div className="rating-stats">
+                                        <span className="rating-count">{negativeCount}</span>
+                                        <span className="rating-percentage">{100 - positivePercentage}%</span>
+                                    </div>
+                                </div>
+                                <div className="rating-bar-track">
+                                    <div 
+                                        className="rating-bar-fill rating-bar-negative" 
+                                        style={{ width: `${100 - positivePercentage}%` }}
+                                    ></div>
+                                </div>
+                            </div>
                         </div>
-                    )}
-                    <div className="flex gap-4">
+
+                        <div className="total-ratings-display">
+                            Total Ratings: <strong>{totalRatings}</strong>
+                        </div>
+                    </div>
+
+                    <div className="website-rate-card">
+                        <h3 className="website-card-title">Rate This Website</h3>
+                        {userRating !== null && (
+                            <div className="current-rating-badge">
+                                Your rating: {userRating === 1 ? "👍 Positive" : "👎 Negative"}
+                            </div>
+                        )}
+                        <div className="rate-buttons-container">
+                            <button
+                                onClick={() => handleRate(1)}
+                                disabled={isRating}
+                                className={`rate-button rate-button-positive ${
+                                    userRating === 1 ? "rate-button-active" : ""
+                                }`}
+                            >
+                                <span className="rate-button-icon">👍</span>
+                                <span>Positive</span>
+                            </button>
+                            <button
+                                onClick={() => handleRate(-1)}
+                                disabled={isRating}
+                                className={`rate-button rate-button-negative ${
+                                    userRating === -1 ? "rate-button-active" : ""
+                                }`}
+                            >
+                                <span className="rate-button-icon">👎</span>
+                                <span>Negative</span>
+                            </button>
+                        </div>
+                        <p className="rate-help-text">
+                            {userRating !== null 
+                                ? "Click to change your rating" 
+                                : "Rate based on this website's use of AI-generated art"}
+                        </p>
+                    </div>
+
+                    <div className="back-link-container">
                         <button
-                            onClick={() => handleRate(1)}
-                            disabled={isRating}
-                            className={`flex-1 py-3 px-6 rounded-lg font-semibold transition ${
-                                userRating === 1
-                                    ? "bg-green-600 text-white"
-                                    : "bg-green-100 text-green-700 hover:bg-green-200"
-                            } disabled:opacity-50 disabled:cursor-not-allowed`}
+                            onClick={() => router.push("/ratings")}
+                            className="back-link-button"
                         >
-                            👍 Positive
-                        </button>
-                        <button
-                            onClick={() => handleRate(-1)}
-                            disabled={isRating}
-                            className={`flex-1 py-3 px-6 rounded-lg font-semibold transition ${
-                                userRating === -1
-                                    ? "bg-red-600 text-white"
-                                    : "bg-red-100 text-red-700 hover:bg-red-200"
-                            } disabled:opacity-50 disabled:cursor-not-allowed`}
-                        >
-                            👎 Negative
+                            ← Back to all websites
                         </button>
                     </div>
-                    <p className="text-sm text-gray-500 mt-2">
-                        {userRating !== null 
-                            ? "Click to change your rating" 
-                            : "Rate based on this website's use of AI-generated art"}
-                    </p>
                 </div>
-            </div>
-
-            <div className="mt-4">
-                <button
-                    onClick={() => router.push("/ratings")}
-                    className="text-blue-600 hover:underline"
-                >
-                    ← Back to all websites
-                </button>
             </div>
         </div>
     );

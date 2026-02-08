@@ -22,7 +22,7 @@ export default function SignupPage() {
       });
 
       if (res.ok) {
-        window.location.href = "/forums";
+        window.location.href = "/";
       } else {
         let msg = "Unable to create account";
         try {
