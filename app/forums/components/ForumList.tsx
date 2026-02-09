@@ -10,22 +10,33 @@ interface Props {
 
 export default function ForumList({ posts }: Props) {
     if (posts.length === 0) {
-        return <div>No forum posts yet.</div>;
+        return <div className="forums-empty">No forum posts yet.</div>;
     }
 
     return (
-        <div className="space-y-4">
-            {posts.map((p) => (
-                <Link key={p.id} href={`/forums/${p.id}`} className="block">
-                    <div className="p-4 border rounded hover:bg-gray-50 cursor-pointer">
-                        <h3 className="text-lg font-semibold">{p.title}</h3>
-                        <p className="mt-1">{p.body}</p>
-                        <div className="text-sm text-gray-600 mt-2">
-                            By {p.username} - {new Date(p.created_at).toLocaleString()}
+        <div className="forums-table">
+            <div className="forums-table-head">
+                <div>Topic</div>
+                <div>Author</div>
+                <div>Last Activity</div>
+            </div>
+            <div className="forums-table-body">
+                {posts.map((p, index) => (
+                    <Link
+                        key={p.id}
+                        href={`/forums/${p.id}`}
+                        className="forums-row"
+                        style={{ animationDelay: `${index * 40}ms` }}
+                    >
+                        <div className="forums-topic">
+                            <div className="forums-topic-title">{p.title}</div>
+                            <div className="forums-topic-preview">{p.body}</div>
                         </div>
-                    </div>
-                </Link>
-            ))}
+                        <div className="forums-author">{p.username}</div>
+                        <div className="forums-time">{new Date(p.created_at).toLocaleString()}</div>
+                    </Link>
+                ))}
+            </div>
         </div>
     );
 }

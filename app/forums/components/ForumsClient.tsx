@@ -18,11 +18,13 @@ export default function ForumsClient({ initialPosts }: Props) {
     }
 
     return (
-        <div>
-            <NewForumForm onCreated={handleCreated} />
-            <div className="mt-6">
+        <div className="forums-content">
+            <section className="forums-panel forums-panel-list">
                 <ForumList posts={posts} />
-            </div>
+            </section>
+            <aside className="forums-panel forums-panel-form" id="new-topic">
+                <NewForumForm onCreated={handleCreated} />
+            </aside>
         </div>
     );
 }

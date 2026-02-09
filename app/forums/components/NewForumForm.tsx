@@ -54,27 +54,32 @@ export default function NewForumForm({ onCreated }: Props) {
     }
 
     return (
-        <form onSubmit={handleSubmit} className="max-w-2xl">
-            {error && <div className="text-red-600 mb-2">{error}</div>}
-            <input
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="Title"
-                className="w-full p-2 border rounded mb-2"
-            />
-            <textarea
-                value={body}
-                onChange={(e) => setBody(e.target.value)}
-                placeholder="Body"
-                rows={6}
-                className="w-full p-2 border rounded mb-2"
-            />
-            <button
-                type="submit"
-                className="px-4 py-2 bg-blue-600 text-white rounded disabled:opacity-50"
-                disabled={loading}
-            >
-                {loading ? "Posting..." : "Create Forum"}
+        <form onSubmit={handleSubmit} className="forums-form">
+            <div className="forums-form-header">
+                <h2>Start a Topic</h2>
+            </div>
+            {error && <div className="forums-error">{error}</div>}
+            <label className="forums-field">
+                <span>Title</span>
+                <input
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    placeholder="Give your topic a clear title"
+                    className="forums-input"
+                />
+            </label>
+            <label className="forums-field">
+                <span>Message</span>
+                <textarea
+                    value={body}
+                    onChange={(e) => setBody(e.target.value)}
+                    placeholder="Share context, links, or questions"
+                    rows={6}
+                    className="forums-textarea"
+                />
+            </label>
+            <button type="submit" className="forums-submit" disabled={loading}>
+                {loading ? "Posting..." : "Create Topic"}
             </button>
         </form>
     );

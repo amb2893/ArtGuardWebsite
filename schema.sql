@@ -6,6 +6,8 @@
 -- ============================
 
 -- Drop tables if they already exist (optional but helpful for development)
+DROP TABLE IF EXISTS article_comments CASCADE;
+DROP TABLE IF EXISTS comments CASCADE;
 DROP TABLE IF EXISTS discussion_forum CASCADE;
 DROP TABLE IF EXISTS websites CASCADE;
 DROP TABLE IF EXISTS accounts CASCADE;
@@ -74,6 +76,17 @@ CREATE TABLE discussion_forum (
     created_at TIMESTAMP DEFAULT NOW()
 );
 
+-- ============================
+-- COMMENTS TABLE
+-- ============================
+CREATE TABLE comments (
+    id SERIAL PRIMARY KEY,
+    post_id INTEGER NOT NULL REFERENCES discussion_forum(id) ON DELETE CASCADE,
+    author_id INTEGER NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+    body TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
 --  sample forum post
 INSERT INTO discussion_forum (author_id, title, body)
 VALUES
@@ -128,6 +141,17 @@ CREATE TABLE articles (
     title VARCHAR(255) NOT NULL,
     body TEXT NOT NULL,
 	URL TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- ============================
+-- ARTICLE COMMENTS TABLE
+-- ============================
+CREATE TABLE article_comments (
+    id SERIAL PRIMARY KEY,
+    article_id INTEGER NOT NULL REFERENCES articles(id) ON DELETE CASCADE,
+    author_id INTEGER NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+    body TEXT NOT NULL,
     created_at TIMESTAMP DEFAULT NOW()
 );
 

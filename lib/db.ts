@@ -18,6 +18,31 @@ export async function getArticles() {
     return res.rows;
 }
 
+export async function getArticleCommentsByArticle(articleId: number) {
+    const res = await pool.query(
+        `SELECT ac.id, ac.article_id, ac.author_id, a.username, ac.body, ac.created_at
+         FROM article_comments ac
+         JOIN accounts a ON ac.author_id = a.id
+         WHERE ac.article_id = $1
+         ORDER BY ac.created_at ASC`,
+        [articleId]
+    );
+    return res.rows;
+}
+
+export async function addArticleComment(articleId: number, authorId: number, body: string) {
+    const res = await pool.query(
+        "INSERT INTO article_comments (article_id, author_id, body) VALUES ($1, $2, $3) RETURNING id, article_id, author_id, body, created_at",
+        [articleId, authorId, body]
+    );
+
+    // Attach username
+    const comment = res.rows[0];
+    const userRes = await pool.query("SELECT username FROM accounts WHERE id = $1", [authorId]);
+    comment.username = userRes.rows[0]?.username ?? null;
+    return comment;
+}
+
 // Forums
 export async function getForumPosts() {
     const res = await pool.query(
