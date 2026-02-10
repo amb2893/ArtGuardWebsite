@@ -1,15 +1,33 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createUser, generateToken } from "../../../lib/auth";
+import { createUser, generateToken, } from "../../../lib/auth";
+import { getPasswordIssues } from "../../../lib/passwordRules";
 
 export async function POST(req: NextRequest) {
   try {
-    const { username, password } = await req.json();
+    const body = await req.json().catch(() => null);
+    if (!body) return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
 
-    if (!username || !password) {
+    const username = String(body.username || "").trim();
+    const password = String(body.password || "");
+    const confirmPassword = String(body.confirmPassword || "");
+
+    if (!username || !password || !confirmPassword) {
       return NextResponse.json({ error: "Missing username or password" }, { status: 400 });
     }
 
-    const user = await createUser(String(username), String(password));
+    if (password !== confirmPassword) {
+      return NextResponse.json({ error: "Passwords do not match" }, { status: 400 });
+    }
+
+    const issues = getPasswordIssues(password);
+    if (issues.length > 0) {
+      return NextResponse.json(
+        { error: "Password does not meet requirements", issues },
+        { status: 400 }
+      );
+    }
+
+    const user = await createUser(username, password);
     const token = generateToken(user);
 
     const res = NextResponse.json({ success: true }, { status: 201 });
@@ -17,7 +35,7 @@ export async function POST(req: NextRequest) {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
-      maxAge: 60 * 60 * 24,
+      maxAge: 60 * 60 * 24 * 7,
       path: "/",
     });
 
@@ -25,9 +43,6 @@ export async function POST(req: NextRequest) {
   } catch (err: any) {
     if (err?.code === "USER_EXISTS" || err?.message === "USER_EXISTS") {
       return NextResponse.json({ error: "Username already taken" }, { status: 409 });
-    }
-    if (err?.message === "WEAK_PASSWORD") {
-      return NextResponse.json({ error: "Password must be at least 8 characters" }, { status: 400 });
     }
     console.error("/api/signup error:", err);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
