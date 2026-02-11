@@ -152,9 +152,15 @@ label {
     border: 1px solid #eef1f6;
 }
 
-.article-title {
+.article-title a {
     font-size: 1.5rem;
-    color: #0f1a2b;
+    color: #000000;
+    margin-bottom: 0.6rem;
+}
+
+.article-title a:hover{
+    font-size: 1.5rem;
+    color: #e11d48;
     margin-bottom: 0.6rem;
 }
 
@@ -1632,4 +1638,138 @@ label {
     .tools-subheading {
         font-size: 1rem;
     }
+}
+
+/* ==========================
+   Featured Articles
+========================== */
+.articles-featured {
+  max-width: 1000px;
+  margin: 0 auto 2rem;
+}
+
+.articles-featured-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.articles-featured-title {
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 1.35rem;
+  color: #0f1a2b;
+}
+
+.articles-featured-subtitle {
+  color: #4a5875;
+  font-size: 0.95rem;
+}
+
+.featured-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.featured-card {
+  display: block;
+  background: #fff;
+  border: 1px solid #eef1f6;
+  border-radius: 16px;
+  padding: 1.2rem 1.2rem 1rem;
+  box-shadow: 0 10px 24px rgba(15, 26, 43, 0.06);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  text-decoration: none;
+  color: inherit;
+}
+
+.featured-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 28px rgba(15, 26, 43, 0.10);
+}
+
+.featured-card-title {
+  font-weight: 800;
+  color: #0f1a2b;
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+  line-height: 1.2;
+}
+
+.featured-card-body {
+  color: #4a5875;
+  font-size: 0.95rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  min-height: 3.9em;
+}
+
+.featured-card:hover .featured-card-title {
+  color: #e11d48;
+}
+
+.featured-card-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 0.9rem;
+  color: #7a859c;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.featured-card-cta {
+  color: #0f1a2b;
+}
+
+@media (max-width: 900px) {
+  .featured-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ==========================
+   Difficulty badges
+========================== */
+.difficulty-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.25rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  border: 1px solid transparent;
+}
+
+.difficulty-badge.is-beginner {
+  background: #ecfdf5;
+  color: #047857;
+  border-color: #a7f3d0;
+}
+
+.difficulty-badge.is-intermediate {
+  background: #fffbeb;
+  color: #b45309;
+  border-color: #fde68a;
+}
+
+.difficulty-badge.is-advanced {
+  background: #fef2f2;
+  color: #b91c1c;
+  border-color: #fecaca;
+}
+
+/* For the "title line with badge" layout */
+.article-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.6rem;
 }

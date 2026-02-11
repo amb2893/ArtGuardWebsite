@@ -10,12 +10,95 @@ const pool = new Pool({
     port: 5432,
 });
 
+//Admin check
+export async function isAdmin(userId: number): Promise<boolean> {
+  const res = await pool.query("SELECT is_admin FROM accounts WHERE id = $1", [userId]);
+  return Boolean(res.rows[0]?.is_admin);
+}
+
 // Articles
-export async function getArticles() {
-    const res = await pool.query(
-        "SELECT id, title, body, URL FROM articles ORDER BY created_at DESC"
-    );
+export async function getPublishedArticlesWithCounts() {
+  const sql = `
+    SELECT
+      ar.id,
+      ar.title,
+      ar.blurb,
+      ar.body,
+      ar.url,
+      ar.difficulty,
+      ar.created_at,
+      ar.published_at,
+      COUNT(ac.id)::int AS comment_count
+    FROM articles ar
+    LEFT JOIN article_comments ac ON ac.article_id = ar.id
+    WHERE ar.is_published = TRUE
+    GROUP BY ar.id
+    ORDER BY ar.published_at DESC NULLS LAST, ar.created_at DESC
+  `.trim();
+
+  try {
+    const res = await pool.query(sql);
     return res.rows;
+  } catch (err: any) {
+    console.error("PG ERROR:", err.message);
+    console.error("PG POSITION:", err.position);
+    console.error("SQL SENT:\n" + sql);
+
+    // If Postgres gave a character position, show the area around it:
+    if (err.position) {
+      const pos = Number(err.position);
+      console.error("SQL AROUND POSITION:\n" + sql.slice(Math.max(0, pos - 50), pos + 50));
+    }
+    throw err;
+  }
+}
+
+export async function getFeaturedArticles() {
+  const sql = `
+    WITH newest AS (
+      SELECT
+        ar.id,
+        ar.title,
+        ar.blurb,
+        ar.difficulty,
+        ar.published_at,
+        ar.created_at,
+        COUNT(ac.id)::int AS comment_count
+      FROM articles ar
+      LEFT JOIN article_comments ac ON ac.article_id = ar.id
+      WHERE ar.is_published = TRUE
+      GROUP BY ar.id
+      ORDER BY ar.published_at DESC NULLS LAST, ar.created_at DESC
+      LIMIT 3
+    ),
+    most_commented AS (
+      SELECT
+        ar.id,
+        ar.title,
+        ar.blurb,
+        ar.difficulty,
+        ar.published_at,
+        ar.created_at,
+        COUNT(ac.id)::int AS comment_count
+      FROM articles ar
+      LEFT JOIN article_comments ac ON ac.article_id = ar.id
+      WHERE ar.is_published = TRUE
+      GROUP BY ar.id
+      ORDER BY COUNT(ac.id) DESC, ar.published_at DESC NULLS LAST, ar.created_at DESC
+      LIMIT 3
+    ),
+    combined AS (
+      SELECT * FROM newest
+      UNION
+      SELECT * FROM most_commented
+    )
+    SELECT *
+    FROM combined
+    ORDER BY comment_count DESC, published_at DESC NULLS LAST, created_at DESC
+    LIMIT 3
+  `;
+  const res = await pool.query(sql);
+  return res.rows;
 }
 
 export async function getArticleCommentsByArticle(articleId: number) {
@@ -28,6 +111,56 @@ export async function getArticleCommentsByArticle(articleId: number) {
         [articleId]
     );
     return res.rows;
+}
+
+// Get a single published article (for /articles/[id])
+export async function getPublishedArticleById(id: number) {
+  const res = await pool.query(
+    `
+    SELECT id, title, blurb, body, url, difficulty, created_at, published_at
+    FROM articles
+    WHERE id = $1 AND is_published = TRUE
+    LIMIT 1
+    `,
+    [id]
+  );
+  return res.rows[0] ?? null;
+}
+
+// Admin create draft
+export async function createDraftArticle(
+  authorId: number,
+  title: string,
+  body: string,
+  blurb: string,
+  difficulty: "Beginner" | "Intermediate" | "Advanced"
+) {
+  const res = await pool.query(
+    `
+    INSERT INTO articles (author_id, title, body, blurb, difficulty, url, is_published, created_at, updated_at)
+    VALUES ($1, $2, $3, $4, $5, NULL, FALSE, NOW(), NOW())
+    RETURNING id, title, blurb, difficulty, is_published, created_at
+    `,
+    [authorId, title, body, blurb, difficulty]
+  );
+
+  return res.rows[0];
+}
+
+// Admin publish
+export async function publishArticle(articleId: number) {
+  const res = await pool.query(
+    `
+    UPDATE articles
+    SET is_published = TRUE,
+        published_at = NOW(),
+        updated_at = NOW()
+    WHERE id = $1
+    RETURNING id, title, is_published, published_at
+    `,
+    [articleId]
+  );
+  return res.rows[0] ?? null;
 }
 
 export async function addArticleComment(articleId: number, authorId: number, body: string) {
