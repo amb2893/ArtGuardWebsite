@@ -20,8 +20,10 @@ export default async function ForumPostPage({
         if (!post) return <div>Post not found</div>;
 
         return (
-            <div className="p-4">
-                <ForumPageClient post={post} initialComments={comments} />
+            <div className="forum-post-page">
+                <div className="forum-post-shell">
+                    <ForumPageClient post={post} initialComments={comments} />
+                </div>
             </div>
         );
     } catch (error) {
