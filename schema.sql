@@ -141,13 +141,16 @@ CREATE TABLE articles (
     id SERIAL PRIMARY KEY,
     author_id INTEGER REFERENCES accounts(id) ON DELETE SET NULL,
     title VARCHAR(255) NOT NULL,
+    blurb TEXT,
     body TEXT NOT NULL,
-	url TEXT NOT NULL,
+    url TEXT,
+    difficulty VARCHAR(50),
     is_published BOOLEAN NOT NULL DEFAULT FALSE,
     published_at TIMESTAMP NULL,
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
+
 
 CREATE INDEX articles_published_idx ON articles(is_published, published_at DESC);
 CREATE INDEX articles_author_idx ON articles(author_id);
@@ -220,3 +223,8 @@ VALUES
   TRUE,
   NOW()
 );
+
+
+UPDATE accounts SET password_hash = '$2b$10$mUo5MN1YQox3PMU/7FGmR.iwSNU0D44WcAFgkmrTNlce.9gT4htUK' WHERE username = 'admin';
+	SELECT id, username, password_hash FROM accounts ORDER BY id;
+SELECT * FROM accounts WHERE username = 'admin';
