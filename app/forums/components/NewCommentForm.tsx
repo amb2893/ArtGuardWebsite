@@ -53,16 +53,16 @@ export default function NewCommentForm({ postId, onCreated }: Props) {
     }
 
     return (
-        <form onSubmit={handleSubmit} className="max-w-2xl">
-            {error && <div className="text-red-600 mb-2">{error}</div>}
+        <form onSubmit={handleSubmit} className="forum-comment-form">
+            {error && <div className="forum-comment-error">{error}</div>}
             <textarea
                 value={body}
                 onChange={(e) => setBody(e.target.value)}
                 placeholder="Write a comment..."
                 rows={4}
-                className="w-full p-2 border rounded mb-2"
+                className="forum-comment-textarea"
             />
-            <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded" disabled={loading}>
+            <button type="submit" className="forum-comment-submit" disabled={loading}>
                 {loading ? "Posting..." : "Post Comment"}
             </button>
         </form>

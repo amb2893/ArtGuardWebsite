@@ -28,7 +28,6 @@ export async function createUser(username: string, password: string): Promise<Us
   const usrname = username.trim();
 
   if (!usrname) throw new Error("INVALID_USERNAME");
-  if (password.length < 8) throw new Error("WEAK_PASSWORD");
 
   const passwordHash = await bcrypt.hash(password, 12);
 
@@ -51,7 +50,6 @@ export async function createUser(username: string, password: string): Promise<Us
     throw err;
   }
 }
-
 
 export function generateToken(user: User): string {
     return jwt.sign({ id: user.id, username: user.username }, JWT_SECRET, { expiresIn: "7d" });

@@ -8,16 +8,18 @@ interface Props {
 }
 
 export default function CommentsList({ comments }: Props) {
-    if (!comments || comments.length === 0) return <div>No comments yet.</div>;
+    if (!comments || comments.length === 0) {
+        return <div className="forum-comments-empty">No comments yet.</div>;
+    }
 
     return (
-        <div className="space-y-4">
+        <div className="forum-comments-stack">
             {comments.map((c) => (
-                <div key={c.id} className="p-3 border rounded">
-                    <div className="text-sm text-gray-700 mb-1">
+                <div key={c.id} className="forum-comment-card">
+                    <div className="forum-comment-meta">
                         <strong>{c.username ?? "Unknown"}</strong> - {new Date(c.created_at).toLocaleString()}
                     </div>
-                    <div>{c.body}</div>
+                    <div className="forum-comment-body">{c.body}</div>
                 </div>
             ))}
         </div>
