@@ -30,9 +30,15 @@ export async function POST(
     return NextResponse.json(published);
   } catch (err: any) {
     console.error("[/api/admin/articles/[id]/publish] ERROR:", err);
-    return NextResponse.json(
-      { error: "Server error", detail: err?.message ?? String(err) },
-      { status: 500 }
-    );
+
+    const responseBody: { error: string; detail?: string } = {
+      error: "Server error",
+    };
+
+    if (process.env.NODE_ENV === "development") {
+      responseBody.detail = err?.message ?? String(err);
+    }
+
+    return NextResponse.json(responseBody, { status: 500 });
   }
 }
