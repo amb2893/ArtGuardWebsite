@@ -12,6 +12,7 @@ export default function NewCommentForm({ postId, onCreated }: Props) {
     const [body, setBody] = useState("");
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const errorId = error ? "forum-comment-error" : undefined;
 
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
@@ -54,13 +55,18 @@ export default function NewCommentForm({ postId, onCreated }: Props) {
 
     return (
         <form onSubmit={handleSubmit} className="forum-comment-form">
-            {error && <div className="forum-comment-error">{error}</div>}
+            {error && <div className="forum-comment-error" id="forum-comment-error" role="alert" aria-live="assertive">{error}</div>}
+            <label htmlFor="forum-comment-body" className="sr-only">Write a comment</label>
             <textarea
+                id="forum-comment-body"
                 value={body}
                 onChange={(e) => setBody(e.target.value)}
                 placeholder="Write a comment..."
                 rows={4}
                 className="forum-comment-textarea"
+                required
+                aria-invalid={Boolean(error)}
+                aria-describedby={errorId}
             />
             <button type="submit" className="forum-comment-submit" disabled={loading}>
                 {loading ? "Posting..." : "Post Comment"}

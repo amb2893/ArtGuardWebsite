@@ -47,3 +47,12 @@ export interface ArticleComment {
     body: string;
     created_at: string;
 }
+
+export interface RatingReview {
+    id: number;
+    website_id: number;
+    author_id: number;
+    username?: string | null;
+    body: string;
+    created_at: string;
+}

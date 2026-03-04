@@ -8,6 +8,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const errorId = error ? "login-form-error" : undefined;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,11 +43,15 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="login-container" style={{ padding: 40 }}>
-      <h1>Login</h1>
+    <div className="auth-page">
+      <form onSubmit={handleSubmit} className="auth-form">
+        <h1 className="auth-form-title">Login</h1>
 
-      <form onSubmit={handleSubmit} className="login-form">
-        {error && <p className="error">{error}</p>}
+        {error && (
+          <p className="error" id="login-form-error" role="alert" aria-live="assertive">
+            {error}
+          </p>
+        )}
 
         <label htmlFor="username">Username</label>
         <input
@@ -55,7 +60,10 @@ export default function LoginPage() {
           value={username}
           onChange={(e) => setUsername(e.target.value)}
           required
-          placeholder="username"
+          placeholder="Enter your username"
+          autoComplete="username"
+          aria-invalid={Boolean(error)}
+          aria-describedby={errorId}
         />
 
         <label htmlFor="password">Password</label>
@@ -65,15 +73,18 @@ export default function LoginPage() {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
-          placeholder="password"
+          placeholder="Enter your password"
+          autoComplete="current-password"
+          aria-invalid={Boolean(error)}
+          aria-describedby={errorId}
         />
 
-        <button type="submit" disabled={loading}>
+        <button type="submit" disabled={loading} className="btn-primary">
           {loading ? "Logging in..." : "Log In"}
         </button>
       </form>
 
-      <p style={{ textAlign: "center", marginTop: "1rem" }}>
+      <p className="auth-footer-text">
         New user? <Link href="/signup">Sign up for an account.</Link>
       </p>
     </div>

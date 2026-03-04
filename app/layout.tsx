@@ -1,5 +1,4 @@
 // app/layout.tsx
-import Link from "next/link";
 import { cookies } from "next/headers";
 import React from "react";
 import NavBar from "./components/NavBar";
@@ -23,9 +22,10 @@ export default async function RootLayout({
     return (
         <html lang="en">
             <body>
+                <a href="#main-content" className="skip-link">Skip to main content</a>
                 <NavBar loggedIn={loggedIn} username={username} />
                 <ActivityMonitor />
-                <main>{children}</main>
+                <main id="main-content" tabIndex={-1}>{children}</main>
             </body>
         </html>
     );
