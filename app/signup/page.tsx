@@ -15,6 +15,7 @@ export default function SignupPage() {
 
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const errorId = error ? "signup-form-error" : undefined;
 
   const issues = useMemo(() => getPasswordIssues(password), [password]);
   const strong = passwordIsStrong(password);
@@ -67,11 +68,15 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="login-container" style={{ padding: 40 }}>
-      <h1>Sign up</h1>
+    <div className="auth-page">
+      <form onSubmit={handleSubmit} className="auth-form" aria-busy={loading}>
+        <h1 className="auth-form-title">Create Account</h1>
 
-      <form onSubmit={handleSubmit} className="login-form">
-        {error && <p className="error">{error}</p>}
+        {error && (
+          <p className="error" id="signup-form-error" role="alert" aria-live="assertive">
+            {error}
+          </p>
+        )}
 
         <label htmlFor="username">Username</label>
         <input
@@ -79,8 +84,10 @@ export default function SignupPage() {
           value={username}
           onChange={(e) => setUsername(e.target.value)}
           required
-          placeholder="username"
+          placeholder="Enter your username"
           autoComplete="username"
+          aria-invalid={Boolean(error)}
+          aria-describedby={errorId}
         />
 
         <label htmlFor="password">Password</label>
@@ -90,14 +97,16 @@ export default function SignupPage() {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
-          placeholder="password"
+          placeholder="Enter password"
           autoComplete="new-password"
+          aria-invalid={Boolean(error)}
+          aria-describedby={errorId ? `${errorId} signup-password-requirements` : "signup-password-requirements"}
         />
 
         {/* Strength checklist */}
-        <div style={{ fontSize: 14 }}>
-          <div style={{ fontWeight: 600, marginBottom: 6 }}>Password requirements:</div>
-          <ul style={{ margin: 0, paddingLeft: 18 }}>
+        <div className="password-requirements" id="signup-password-requirements">
+          <div className="requirements-title">Password requirements:</div>
+          <ul className="requirements-list">
             {(
               [
                 "too_short",
@@ -109,7 +118,7 @@ export default function SignupPage() {
             ).map((rule) => {
               const unmet = issues.includes(rule);
               return (
-                <li key={rule} style={{ color: unmet ? "crimson" : "green" }}>
+                <li key={rule} className={unmet ? "unmet" : "met"}>
                   {passwordIssueMessage(rule)}
                 </li>
               );
@@ -117,29 +126,35 @@ export default function SignupPage() {
           </ul>
         </div>
 
-        <label htmlFor="confirmPassword">Confirm password</label>
+        <label htmlFor="confirmPassword">Confirm Password</label>
         <input
           id="confirmPassword"
           type="password"
           value={confirmPassword}
           onChange={(e) => setConfirmPassword(e.target.value)}
           required
-          placeholder="confirm password"
+          placeholder="Confirm password"
           autoComplete="new-password"
+          aria-invalid={Boolean(error) || (confirmPassword.length > 0 && !matches)}
+          aria-describedby={errorId ? `${errorId} password-match-status` : "password-match-status"}
         />
 
         {confirmPassword.length > 0 && (
-          <p style={{ margin: 0, fontSize: 14, color: matches ? "green" : "crimson" }}>
-            {matches ? "Passwords match" : "Passwords do not match"}
+          <p id="password-match-status" className={`password-match ${matches ? "matched" : "unmatched"}`} role="status" aria-live="polite">
+            {matches ? "Passwords match ✓" : "Passwords do not match"}
           </p>
         )}
 
-        <button type="submit" disabled={!canSubmit}>
+        <button type="submit" disabled={!canSubmit} className="btn-primary" aria-describedby="signup-submit-status">
           {loading ? "Creating account..." : "Create Account"}
         </button>
+
+        <p id="signup-submit-status" className="sr-only" role="status" aria-live="polite">
+          {loading ? "Creating your account" : ""}
+        </p>
       </form>
 
-      <p style={{ textAlign: "center", marginTop: "1rem" }}>
+      <p className="auth-footer-text">
         Already have an account? <Link href="/login">Log in here.</Link>
       </p>
     </div>

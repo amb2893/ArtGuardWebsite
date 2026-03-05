@@ -105,6 +105,19 @@ CREATE TABLE IF NOT EXISTS ratings (
 );
 
 -- ============================
+-- RATINGS REVIEWS TABLE
+-- ============================
+CREATE TABLE IF NOT EXISTS ratings_reviews (
+  id SERIAL PRIMARY KEY,
+  website_id INTEGER NOT NULL REFERENCES websites(id) ON DELETE CASCADE,
+  author_id INTEGER NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+  body TEXT NOT NULL,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS ratings_reviews_website_idx ON ratings_reviews(website_id, created_at ASC);
+
+-- ============================
 -- Seed Ratings (Fake Data)
 -- ============================
 

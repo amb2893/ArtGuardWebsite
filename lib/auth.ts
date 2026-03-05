@@ -7,7 +7,7 @@ export interface User {
     username: string;
 }
 
-const JWT_SECRET = process.env.JWT_SECRET || "supersecret";
+const JWT_SECRET = process.env.JWT_SECRET || "s^aiBI%C#{(Y2zr3!@#5+8&L9$Xwqv";
 
 export async function authenticateUser(username: string, password: string): Promise<User | null> {
     const res = await pool.query(

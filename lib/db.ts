@@ -2,12 +2,11 @@
 import { Pool } from "pg";
 import { Website } from "./types";
 
+const defaultLocalConnection = "postgres://postgres@localhost:5432/artguard";
+const connectionString = process.env.DATABASE_URL ?? defaultLocalConnection;
+
 const pool = new Pool({
-    user: "postgres",
-    host: "localhost",
-    database: "artguard",
-    password: "password",
-    port: 5432,
+  connectionString,
 });
 
 //Admin check
@@ -313,7 +312,6 @@ export async function incrementReport(id: number) {
     await pool.query("UPDATE websites SET report_count = report_count + 1 WHERE id = $1", [id]);
 }
 
-// Get recently rated websites (top 3)
 export async function getRecentlyRatedWebsites(): Promise<Website[]> {
     const res = await pool.query(`
         SELECT 
@@ -344,6 +342,58 @@ export async function getTopRatedWebsites(): Promise<Website[]> {
         LIMIT 3
     `);
     return res.rows;
+}
+
+// Ratings Reviews
+let ratingsReviewsTableReady = false;
+
+async function ensureRatingsReviewsTable() {
+  if (ratingsReviewsTableReady) return;
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS ratings_reviews (
+      id SERIAL PRIMARY KEY,
+      website_id INTEGER NOT NULL REFERENCES websites(id) ON DELETE CASCADE,
+      author_id INTEGER NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+      body TEXT NOT NULL,
+      created_at TIMESTAMP DEFAULT NOW()
+    )
+  `);
+
+  await pool.query(
+    "CREATE INDEX IF NOT EXISTS ratings_reviews_website_idx ON ratings_reviews(website_id, created_at ASC)"
+  );
+
+  ratingsReviewsTableReady = true;
+}
+
+export async function getRatingReviewsByWebsite(websiteId: number) {
+  await ensureRatingsReviewsTable();
+
+    const res = await pool.query(
+        `SELECT rr.id, rr.website_id, rr.author_id, a.username, rr.body, rr.created_at
+         FROM ratings_reviews rr
+         JOIN accounts a ON rr.author_id = a.id
+         WHERE rr.website_id = $1
+         ORDER BY rr.created_at ASC`,
+        [websiteId]
+    );
+    return res.rows;
+}
+
+export async function addRatingReview(websiteId: number, authorId: number, body: string) {
+  await ensureRatingsReviewsTable();
+
+    const res = await pool.query(
+        "INSERT INTO ratings_reviews (website_id, author_id, body) VALUES ($1, $2, $3) RETURNING id, website_id, author_id, body, created_at",
+        [websiteId, authorId, body]
+    );
+
+    // Attach username
+    const review = res.rows[0];
+    const userRes = await pool.query("SELECT username FROM accounts WHERE id = $1", [authorId]);
+    review.username = userRes.rows[0]?.username ?? null;
+    return review;
 }
 
 export { pool };

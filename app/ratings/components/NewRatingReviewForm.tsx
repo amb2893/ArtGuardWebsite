@@ -1,31 +1,31 @@
 "use client";
 
 import React, { useState } from "react";
-import { ArticleComment } from "../../../lib/types";
+import { RatingReview } from "../../../lib/types";
 
 interface Props {
-    articleId: number;
-    onCreated: (c: ArticleComment) => void;
+    websiteId: number;
+    onCreated: (r: RatingReview) => void;
 }
 
-export default function NewArticleCommentForm({ articleId, onCreated }: Props) {
+export default function NewRatingReviewForm({ websiteId, onCreated }: Props) {
     const [body, setBody] = useState("");
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const errorId = error ? "article-comment-error" : undefined;
+    const errorId = error ? "rating-review-error" : undefined;
 
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
         setError(null);
 
         if (!body.trim()) {
-            setError("Comment cannot be empty");
+            setError("Review cannot be empty");
             return;
         }
 
         setLoading(true);
         try {
-            const res = await fetch(`/api/articles/${articleId}/comments`, {
+            const res = await fetch(`/api/ratings/${websiteId}/reviews`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 credentials: "same-origin",
@@ -33,17 +33,17 @@ export default function NewArticleCommentForm({ articleId, onCreated }: Props) {
             });
 
             if (res.status === 401) {
-                setError("You must be logged in to comment.");
+                setError("You must be logged in to write a review.");
                 return;
             }
 
             if (!res.ok) {
                 const json = await res.json().catch(() => ({}));
-                setError(json?.error || "Failed to create comment.");
+                setError(json?.error || "Failed to create review.");
                 return;
             }
 
-            const created: ArticleComment = await res.json();
+            const created: RatingReview = await res.json();
             onCreated(created);
             setBody("");
         } catch (err) {
@@ -54,22 +54,22 @@ export default function NewArticleCommentForm({ articleId, onCreated }: Props) {
     }
 
     return (
-        <form onSubmit={handleSubmit} className="article-comment-form">
-            {error && <div className="article-comments-error" id="article-comment-error" role="alert" aria-live="assertive">{error}</div>}
-            <label htmlFor="article-comment-body" className="sr-only">Write a comment</label>
+        <form onSubmit={handleSubmit} className="rating-review-form">
+            {error && <div className="rating-review-error" id="rating-review-error" role="alert" aria-live="assertive">{error}</div>}
+            <label htmlFor="rating-review-body" className="sr-only">Write a review</label>
             <textarea
-                id="article-comment-body"
+                id="rating-review-body"
                 value={body}
                 onChange={(e) => setBody(e.target.value)}
-                placeholder="Write a comment..."
+                placeholder="Write a review about this website..."
                 rows={4}
-                className="article-comment-textarea"
+                className="rating-review-textarea"
                 required
                 aria-invalid={Boolean(error)}
                 aria-describedby={errorId}
             />
-            <button type="submit" className="article-comment-submit" disabled={loading}>
-                {loading ? "Posting..." : "Post Comment"}
+            <button type="submit" className="rating-review-submit" disabled={loading}>
+                {loading ? "Posting..." : "Post Review"}
             </button>
         </form>
     );

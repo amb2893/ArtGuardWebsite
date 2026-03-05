@@ -22,13 +22,22 @@ export default function SearchRatings({ websites, recentlyRated, topRated }: Sea
     return (
         <div>
             <div className="ratings-search-container">
+                <label htmlFor="ratings-search" className="sr-only">Search websites by name</label>
                 <input
+                    id="ratings-search"
                     type="text"
                     placeholder="Search websites..."
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
                     className="ratings-search-input"
+                    aria-describedby="ratings-search-help"
                 />
+                <p id="ratings-search-help" className="sr-only">Type to filter the list of websites.</p>
+                <p className="sr-only" role="status" aria-live="polite">
+                    {query
+                        ? `${filtered.length} ${filtered.length === 1 ? "website" : "websites"} found`
+                        : `Showing ${websites.length} websites`}
+                </p>
             </div>
 
             {!query && topRated.length > 0 && (

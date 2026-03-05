@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Website } from "../../../lib/types";
 import { useRouter } from "next/navigation";
+import RatingReviewsSection from "./RatingReviewsSection";
 
 interface Props {
     website: Website;
@@ -20,9 +21,13 @@ export default function WebsitePageClient({ website, ratingsData, userRating: in
     const [userRating, setUserRating] = useState<number | null>(initialUserRating);
     const [positiveCount, setPositiveCount] = useState(Number(ratingsData.positive_count));
     const [negativeCount, setNegativeCount] = useState(Number(ratingsData.negative_count));
+    const [ratingError, setRatingError] = useState<string | null>(null);
+    const [ratingStatus, setRatingStatus] = useState<string | null>(null);
 
     async function handleRate(rating: number) {
         setIsRating(true);
+        setRatingError(null);
+        setRatingStatus(null);
         try {
             const response = await fetch(`/api/ratings`, {
                 method: "POST",
@@ -34,7 +39,7 @@ export default function WebsitePageClient({ website, ratingsData, userRating: in
             });
 
             if (response.status === 401) {
-                alert("Please log in to rate websites");
+                setRatingError("Please log in to rate websites.");
                 return;
             }
 
@@ -60,12 +65,13 @@ export default function WebsitePageClient({ website, ratingsData, userRating: in
             }
             
             setUserRating(rating);
+            setRatingStatus("Your rating has been submitted.");
             
             // Refresh the page data from server
             router.refresh();
         } catch (error) {
             console.error("Error submitting rating:", error);
-            alert("Failed to submit rating. Please try again.");
+            setRatingError("Failed to submit rating. Please try again.");
         } finally {
             setIsRating(false);
         }
@@ -165,6 +171,20 @@ export default function WebsitePageClient({ website, ratingsData, userRating: in
                                 ? "Click to change your rating" 
                                 : "Rate based on this website's use of AI-generated art"}
                         </p>
+                        {ratingStatus && (
+                            <p className="rate-status" role="status" aria-live="polite">
+                                {ratingStatus}
+                            </p>
+                        )}
+                        {ratingError && (
+                            <p className="rate-error" role="alert" aria-live="assertive">
+                                {ratingError}
+                            </p>
+                        )}
+                    </div>
+
+                    <div className="website-rate-card rating-reviews-container">
+                        <RatingReviewsSection websiteId={website.id} />
                     </div>
 
                     <div className="back-link-container">
