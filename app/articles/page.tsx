@@ -32,8 +32,8 @@ export default async function ArticlesPage() {
 
         {admin && (
           <div style={{ marginTop: 12 }}>
-            <Link href="/articles/new">
-              <button type="button">Create Article</button>
+            <Link href="/articles/new" className="btn-primary create-article-link">
+              Create Article
             </Link>
           </div>
         )}

@@ -69,7 +69,7 @@ export default function SignupPage() {
 
   return (
     <div className="auth-page">
-      <form onSubmit={handleSubmit} className="auth-form">
+      <form onSubmit={handleSubmit} className="auth-form" aria-busy={loading}>
         <h1 className="auth-form-title">Create Account</h1>
 
         {error && (
@@ -145,9 +145,13 @@ export default function SignupPage() {
           </p>
         )}
 
-        <button type="submit" disabled={!canSubmit} className="btn-primary">
+        <button type="submit" disabled={!canSubmit} className="btn-primary" aria-describedby="signup-submit-status">
           {loading ? "Creating account..." : "Create Account"}
         </button>
+
+        <p id="signup-submit-status" className="sr-only" role="status" aria-live="polite">
+          {loading ? "Creating your account" : ""}
+        </p>
       </form>
 
       <p className="auth-footer-text">

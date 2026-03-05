@@ -22,7 +22,6 @@ export default async function RootLayout({
     return (
         <html lang="en">
             <body>
-                <a href="#main-content" className="skip-link">Skip to main content</a>
                 <NavBar loggedIn={loggedIn} username={username} />
                 <ActivityMonitor />
                 <main id="main-content" tabIndex={-1}>{children}</main>

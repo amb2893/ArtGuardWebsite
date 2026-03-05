@@ -79,9 +79,13 @@ export default function LoginPage() {
           aria-describedby={errorId}
         />
 
-        <button type="submit" disabled={loading} className="btn-primary">
+        <button type="submit" disabled={loading} className="btn-primary" aria-describedby="login-submit-status">
           {loading ? "Logging in..." : "Log In"}
         </button>
+
+        <p id="login-submit-status" className="sr-only" role="status" aria-live="polite">
+          {loading ? "Attempting to log in" : ""}
+        </p>
       </form>
 
       <p className="auth-footer-text">

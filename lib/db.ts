@@ -2,8 +2,11 @@
 import { Pool } from "pg";
 import { Website } from "./types";
 
+const defaultLocalConnection = "postgres://postgres@localhost:5432/artguard";
+const connectionString = process.env.DATABASE_URL ?? defaultLocalConnection;
+
 const pool = new Pool({
-    connectionString: "postgresql://postgres:k%40ly%24%24308022@localhost:5432/artguard",
+  connectionString,
 });
 
 //Admin check
