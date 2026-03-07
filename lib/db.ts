@@ -215,6 +215,28 @@ export async function updateForumPost(postId: number, title: string, body: strin
     return res.rows[0];
 }
 
+// Get popular forum threads (by comment count)
+export async function getPopularForumThreads(limit: number = 5) {
+    const res = await pool.query(
+        `SELECT 
+            f.id, 
+            f.title, 
+            f.body, 
+            f.author_id, 
+            a.username, 
+            f.created_at,
+            COUNT(c.id)::INTEGER as comment_count
+         FROM discussion_forum f
+         JOIN accounts a ON f.author_id = a.id
+         LEFT JOIN comments c ON c.post_id = f.id
+         GROUP BY f.id, f.title, f.body, f.author_id, a.username, f.created_at
+         ORDER BY comment_count DESC, f.created_at DESC
+         LIMIT $1`,
+        [limit]
+    );
+    return res.rows;
+}
+
 // Comments
 export async function getCommentsByPost(postId: number) {
     const res = await pool.query(
@@ -341,6 +363,26 @@ export async function getTopRatedWebsites(): Promise<Website[]> {
         ORDER BY report_count DESC
         LIMIT 3
     `);
+    return res.rows;
+}
+
+// Get popular websites by combined ratings and reviews count
+export async function getPopularWebsites(limit: number = 5) {
+    const res = await pool.query(`
+        SELECT 
+            w.id, 
+            w.website_name, 
+            COALESCE(COUNT(DISTINCT r.id), 0)::INTEGER as rating_count,
+            COALESCE(COUNT(DISTINCT rr.id), 0)::INTEGER as review_count,
+            (COALESCE(COUNT(DISTINCT r.id), 0) + COALESCE(COUNT(DISTINCT rr.id), 0))::INTEGER as total_activity
+        FROM websites w
+        LEFT JOIN ratings r ON w.id = r.website_id
+        LEFT JOIN ratings_reviews rr ON w.id = rr.website_id
+        GROUP BY w.id, w.website_name
+        HAVING (COALESCE(COUNT(DISTINCT r.id), 0) + COALESCE(COUNT(DISTINCT rr.id), 0)) > 0
+        ORDER BY total_activity DESC, w.website_name ASC
+        LIMIT $1
+    `, [limit]);
     return res.rows;
 }
 

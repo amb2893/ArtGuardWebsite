@@ -62,6 +62,7 @@ export default function NewRatingReviewForm({ websiteId, onCreated }: Props) {
                 value={body}
                 onChange={(e) => setBody(e.target.value)}
                 placeholder="Write a review about this website..."
+                title="Enter your review of this website's treatment of artists"
                 rows={4}
                 className="rating-review-textarea"
                 required

@@ -67,6 +67,7 @@ export default function NewForumForm({ onCreated }: Props) {
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                     placeholder="Give your topic a clear title"
+                    title="Enter the title of your forum topic"
                     className="forums-input"
                     required
                     aria-invalid={Boolean(error)}
@@ -80,6 +81,7 @@ export default function NewForumForm({ onCreated }: Props) {
                     value={body}
                     onChange={(e) => setBody(e.target.value)}
                     placeholder="Share context, links, or questions"
+                    title="Enter your forum topic message or content"
                     rows={6}
                     className="forums-textarea"
                     required

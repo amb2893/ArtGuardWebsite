@@ -62,6 +62,7 @@ export default function NewArticleCommentForm({ articleId, onCreated }: Props) {
                 value={body}
                 onChange={(e) => setBody(e.target.value)}
                 placeholder="Write a comment..."
+                title="Enter your comment on this article"
                 rows={4}
                 className="article-comment-textarea"
                 required

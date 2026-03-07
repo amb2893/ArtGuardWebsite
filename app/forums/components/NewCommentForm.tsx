@@ -62,6 +62,7 @@ export default function NewCommentForm({ postId, onCreated }: Props) {
                 value={body}
                 onChange={(e) => setBody(e.target.value)}
                 placeholder="Write a comment..."
+                title="Enter your comment on this forum topic"
                 rows={4}
                 className="forum-comment-textarea"
                 required

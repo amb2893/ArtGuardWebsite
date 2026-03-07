@@ -59,6 +59,7 @@ export default function LoginForm() {
                 id="login-component-username"
                 type="text"
                 placeholder="Username"
+                title="Enter your username"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 required
@@ -72,6 +73,7 @@ export default function LoginForm() {
                 id="login-component-password"
                 type="password"
                 placeholder="Password"
+                title="Enter your password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
