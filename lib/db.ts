@@ -2,7 +2,6 @@
 import { Pool } from "pg";
 import { Website } from "./types";
 
-
 // Extend globalThis for serverless hot reloads
 declare global {
   // eslint-disable-next-line no-var
@@ -13,11 +12,15 @@ declare global {
   ===========================
   CONFIGURATION
   ===========================
-  Uncomment the local fallback for development if you want to test with your local Postgres.
+  We prioritize the secure server-side vars first (SUPABASE_*) for database connections.
 */
 
-// Production / Netlify (Supabase) connection
-const connectionString = process.env.DATABASE_URL;
+const connectionString = process.env.SUPABASE_DATABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_DATABASE_URL;
+
+if (!connectionString) {
+  throw new Error("Database URL is not set in environment variables.");
+}
+
 
 /*
 // Local development fallback
@@ -27,9 +30,7 @@ const connectionString =
 
 const pool: Pool = globalThis.__pgPool__ ?? new Pool({
   connectionString,
-  ssl: connectionString && process.env.DATABASE_URL
-    ? { rejectUnauthorized: false }
-    : false,
+  ssl: { rejectUnauthorized: false }, // Supabase requires SSL
 });
 
 // Store globally to prevent multiple connections during hot reloads
@@ -37,8 +38,10 @@ if (!globalThis.__pgPool__) {
   globalThis.__pgPool__ = pool;
 }
 
-// Default export
 export default pool;
+
+
+
 
 
 /*
