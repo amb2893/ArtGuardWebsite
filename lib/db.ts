@@ -2,13 +2,26 @@
 import { Pool } from "pg";
 import { Website } from "./types";
 
-const defaultLocalConnection = "postgres://postgres@localhost:5432/artguard";
-const connectionString = process.env.DATABASE_URL ?? defaultLocalConnection;
+// Use Supabase DATABASE_URL in production, fallback to local dev
+const supabaseUrl = process.env.DATABASE_URL;
+const localUrl = "postgres://postgres@localhost:5432/artguard";
 
-const pool = new Pool({
-  connectionString,
-});
+// Try Supabase first, if missing use local
+const connectionString = supabaseUrl ?? localUrl;
 
+// Singleton to prevent too many connections on serverless
+const globalForPg = global as unknown as { pool?: Pool };
+
+export const pool =
+  globalForPg.pool ??
+  new Pool({
+    connectionString,
+    ssl: supabaseUrl ? { rejectUnauthorized: false } : false,
+  });
+
+if (process.env.NODE_ENV !== "production") {
+  globalForPg.pool = pool;
+}
 //Admin check
 export async function isAdmin(userId: number): Promise<boolean> {
   const res = await pool.query("SELECT is_admin FROM accounts WHERE id = $1", [userId]);
