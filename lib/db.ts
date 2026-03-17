@@ -7,18 +7,19 @@ declare global {
   var __pgPool__: Pool | undefined;
 }
 
-const globalForDb = globalThis as unknown as { __pgPool__?: Pool };
-
-const pool = globalForDb.__pgPool__ ?? new Pool({
+// singleton pattern for serverless / hot reloads
+const pool: Pool = globalThis.__pgPool__ ?? new Pool({
   connectionString: process.env.DATABASE_URL,
-  // optionally add ssl or other options if required:
-  // ssl: { rejectUnauthorized: false }
+  ssl: process.env.DATABASE_URL ? { rejectUnauthorized: false } : false,
 });
 
-if (!globalForDb.__pgPool__) globalForDb.__pgPool__ = pool;
+// store pool globally for future reloads
+if (!globalThis.__pgPool__) {
+  globalThis.__pgPool__ = pool;
+}
 
-export { pool };
-
+// export as default
+export default pool;
 
 
 //Admin check
