@@ -1,19 +1,27 @@
 // lib/db.ts
-import { Pool } from 'pg';
+import { Pool } from "pg";
+import { Website } from "./types";
 
+// Use Supabase env first, fallback to local dev
+const connectionString = process.env.DATABASE_URL ?? "postgres://postgres@localhost:5432/artguard";
+
+// Extend global type to store the pool (avoids redeclaration)
 declare global {
-  // allow a global variable to persist between module reloads in dev
-  // eslint-disable-next-line no-var
   var __pgPool__: Pool | undefined;
 }
 
-const _pool = global.__pgPool__ ?? new Pool({
-  connectionString: process.env.DATABASE_URL,
-});
+// Export pool immediately
+export const pool =
+  global.__pgPool__ ??
+  new Pool({
+    connectionString,
+    ssl: process.env.DATABASE_URL ? { rejectUnauthorized: false } : false,
+  });
 
-if (!global.__pgPool__) global.__pgPool__ = _pool;
-
-export const pool = _pool;
+// Store in global variable for future module reloads
+if (!global.__pgPool__) {
+  global.__pgPool__ = pool;
+}
 
 //Admin check
 export async function isAdmin(userId: number): Promise<boolean> {
