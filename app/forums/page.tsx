@@ -2,11 +2,11 @@
 import ForumsClient from "./components/ForumsClient";
 import { getForumPosts } from "@/lib/db";
 
-export const revalidate = 60; // ISR: rebuild every 60 seconds
+export const dynamic = "force-dynamic";
 
 export default async function ForumsPage() {
   // Server-side fetch posts
-  const posts = await getForumPosts(); // optionally limit rows with SQL LIMIT 50
+  const posts = await getForumPosts(50);
 
   return (
     <div className="forums-page">

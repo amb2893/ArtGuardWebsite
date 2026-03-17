@@ -41,7 +41,7 @@ export async function isAdmin(userId: number): Promise<boolean> {
 }
 
 // Articles
-export async function getPublishedArticlesWithCounts() {
+export async function getPublishedArticlesWithCounts(limit?: number) {
   const sql = `
     SELECT
       ar.id,
@@ -58,10 +58,12 @@ export async function getPublishedArticlesWithCounts() {
     WHERE ar.is_published = TRUE
     GROUP BY ar.id
     ORDER BY ar.published_at DESC NULLS LAST, ar.created_at DESC
+    ${typeof limit === "number" ? "LIMIT $1" : ""}
   `.trim();
 
   try {
-    const res = await pool.query(sql);
+    const queryArgs = typeof limit === "number" ? [Math.max(1, Math.min(200, Math.trunc(limit)))] : [];
+    const res = await pool.query(sql, queryArgs);
     return res.rows;
   } catch (err: any) {
     console.error("PG ERROR:", err.message);
@@ -201,13 +203,15 @@ export async function addArticleComment(articleId: number, authorId: number, bod
 }
 
 // Forums
-export async function getForumPosts() {
-    const res = await pool.query(
-        `SELECT f.id, f.title, f.body, f.author_id, a.username, f.created_at
-         FROM discussion_forum f
-         JOIN accounts a ON f.author_id = a.id
-         ORDER BY f.created_at DESC`
-    );
+export async function getForumPosts(limit?: number) {
+  const sql = `SELECT f.id, f.title, f.body, f.author_id, a.username, f.created_at
+     FROM discussion_forum f
+     JOIN accounts a ON f.author_id = a.id
+     ORDER BY f.created_at DESC
+     ${typeof limit === "number" ? "LIMIT $1" : ""}`;
+
+  const queryArgs = typeof limit === "number" ? [Math.max(1, Math.min(200, Math.trunc(limit)))] : [];
+  const res = await pool.query(sql, queryArgs);
     return res.rows;
 }
 
