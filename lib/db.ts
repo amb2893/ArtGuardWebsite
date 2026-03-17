@@ -2,46 +2,30 @@
 import { Pool } from "pg";
 import { Website } from "./types";
 
-// Extend globalThis for serverless hot reloads
 declare global {
-  // eslint-disable-next-line no-var
   var __pgPool__: Pool | undefined;
 }
 
-/*
-  ===========================
-  CONFIGURATION
-  ===========================
-  We prioritize the secure server-side vars first (SUPABASE_*) for database connections.
-*/
-
-const connectionString = process.env.SUPABASE_DATABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_DATABASE_URL;
+const connectionString = process.env.SUPABASE_DATABASE_URL;
 
 if (!connectionString) {
-  throw new Error("Database URL is not set in environment variables.");
+  throw new Error("SUPABASE_DATABASE_URL must be set!");
 }
 
+const pool: Pool = globalThis.__pgPool__ ?? new Pool({
+  connectionString,
+  ssl: { rejectUnauthorized: false }, // required for Supabase in serverless
+});
+
+if (!globalThis.__pgPool__) globalThis.__pgPool__ = pool;
+
+export default pool;
 
 /*
 // Local development fallback
 const connectionString =
   "postgres://postgres@localhost:5432/artguard";
 */
-
-const pool: Pool = globalThis.__pgPool__ ?? new Pool({
-  connectionString,
-  ssl: { rejectUnauthorized: false }, // Supabase requires SSL
-});
-
-// Store globally to prevent multiple connections during hot reloads
-if (!globalThis.__pgPool__) {
-  globalThis.__pgPool__ = pool;
-}
-
-export default pool;
-
-
-
 
 
 /*
