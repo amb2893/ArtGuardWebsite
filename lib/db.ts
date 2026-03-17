@@ -1,6 +1,5 @@
 // lib/db.ts
 import { Pool } from "pg";
-import { Website } from "./types";
 
 declare global {
   // allow storing the pool instance on globalThis across module reloads
