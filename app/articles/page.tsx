@@ -1,4 +1,3 @@
-// pages/articles/page.tsx
 import React from "react";
 import Link from "next/link";
 import { cookies } from "next/headers";
@@ -11,13 +10,10 @@ function difficultyClass(d: string) {
   return "difficulty-badge is-advanced";
 }
 
-export const revalidate = 60; // ISR: rebuild page every 60 seconds
-
 export default async function ArticlesPage() {
-  // Limit fetched articles to prevent build timeout
   const [featured, articles] = await Promise.all([
     getFeaturedArticles(),
-    getPublishedArticlesWithCounts(), // Optionally add LIMIT 50 inside this function
+    getPublishedArticlesWithCounts(),
   ]);
 
   const cookieStore = await cookies();
@@ -27,13 +23,13 @@ export default async function ArticlesPage() {
 
   return (
     <div className="articles-page">
-      {/* Header */}
       <header className="articles-header">
         <div>
           <p className="articles-eyebrow">Insights</p>
           <h1 className="articles-title">Articles</h1>
           <p className="articles-subtitle">Explore articles on Art & AI</p>
         </div>
+
         {admin && (
           <div style={{ marginTop: 12 }}>
             <Link href="/articles/new" className="btn-primary create-article-link">
@@ -49,12 +45,16 @@ export default async function ArticlesPage() {
           <h2 className="articles-featured-title">Featured</h2>
           <p className="articles-featured-subtitle">New + most discussed picks</p>
         </div>
+
         <div className="featured-grid">
           {featured.map((a: any) => (
             <Link key={a.id} href={`/articles/${a.id}`} className="featured-card">
+              {/* difficulty on top, above title */}
               <div className={difficultyClass(a.difficulty)}>{a.difficulty}</div>
+
               <div className="featured-card-title">{a.title}</div>
               <div className="featured-card-body">{a.blurb}</div>
+
               <div className="featured-card-meta">
                 <span>{a.comment_count} comment{a.comment_count === 1 ? "" : "s"}</span>
                 <span className="featured-card-cta">Read →</span>
@@ -69,17 +69,21 @@ export default async function ArticlesPage() {
         {articles.map((a: any) => (
           <article key={a.id} className="article-card">
             <div className="article-content">
+              {/* difficulty on same line as title */}
               <div className="article-title-row">
                 <h2 className="article-title">
                   <Link href={`/articles/${a.id}`}>{a.title}</Link>
                 </h2>
                 <span className={difficultyClass(a.difficulty)}>{a.difficulty}</span>
               </div>
+
               <p className="article-body">{a.blurb}</p>
+
               <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
                 <span className="article-comments-muted">
                   {a.comment_count} comment{a.comment_count === 1 ? "" : "s"}
                 </span>
+
                 <Link className="article-link" href={`/articles/${a.id}`}>
                   Read full article
                 </Link>
