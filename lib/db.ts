@@ -2,29 +2,26 @@
 import { Pool } from "pg";
 import { Website } from "./types";
 
-// Use Supabase env first, fallback to local dev
-const connectionString = process.env.DATABASE_URL ?? "postgres://postgres@localhost:5432/artguard";
+// Use Supabase DATABASE_URL in production, fallback to local dev
+const supabaseUrl = process.env.DATABASE_URL;
+const localUrl = "postgres://postgres@localhost:5432/artguard";
 
-// Extend global type to store the pool (avoids redeclaration)
-declare global {
-  // eslint-disable-next-line no-var
-  var __pgPool__: Pool | undefined;
+// Try Supabase first, if missing use local
+const connectionString = supabaseUrl ?? localUrl;
+
+// Singleton to prevent too many connections on serverless
+const globalForPg = global as unknown as { pool?: Pool };
+
+export const pool =
+  globalForPg.pool ??
+  new Pool({
+    connectionString,
+    ssl: supabaseUrl ? { rejectUnauthorized: false } : false,
+  });
+
+if (process.env.NODE_ENV !== "production") {
+  globalForPg.pool = pool;
 }
-
-// Use existing global pool if present; otherwise create one
-const pool = global.__pgPool__ ?? new Pool({
-  connectionString,
-  ssl: process.env.DATABASE_URL ? { rejectUnauthorized: false } : false,
-});
-
-// Store in global variable for future module reloads
-if (!global.__pgPool__) {
-  global.__pgPool__ = pool;
-}
-
-// Export once at the end
-export { pool };
-
 //Admin check
 export async function isAdmin(userId: number): Promise<boolean> {
   const res = await pool.query("SELECT is_admin FROM accounts WHERE id = $1", [userId]);
