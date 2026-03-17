@@ -31,7 +31,7 @@ export default async function ForumsPage() {
           <div className="forums-sort">Latest Activity</div>
         </div>
 
-        {/* Client component takes the server-fetched posts as initial state */}
+        {/* Client component takes the server-fetched posts as initial state maybe */}
         <ForumsClient initialPosts={posts} />
       </div>
     </div>
