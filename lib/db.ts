@@ -2,50 +2,26 @@
 import { Pool } from "pg";
 import { Website } from "./types";
 
-
-// Extend globalThis for serverless hot reloads
 declare global {
+  // allow storing the pool instance on globalThis across module reloads
   // eslint-disable-next-line no-var
   var __pgPool__: Pool | undefined;
 }
 
-/*
-  ===========================
-  CONFIGURATION
-  ===========================
-  Uncomment the local fallback for development if you want to test with your local Postgres.
-*/
-
-// Production / Netlify (Supabase) connection
-const connectionString = process.env.DATABASE_URL;
-
-/*
-// Local development fallback
-const connectionString =
-  "postgres://postgres@localhost:5432/artguard";
-*/
-
+// singleton pattern for serverless / hot reloads
 const pool: Pool = globalThis.__pgPool__ ?? new Pool({
-  connectionString,
-  ssl: connectionString && process.env.DATABASE_URL
-    ? { rejectUnauthorized: false }
-    : false,
+  connectionString: process.env.DATABASE_URL,
+  ssl: process.env.DATABASE_URL ? { rejectUnauthorized: false } : false,
 });
 
-// Store globally to prevent multiple connections during hot reloads
+// store pool globally for future reloads
 if (!globalThis.__pgPool__) {
   globalThis.__pgPool__ = pool;
 }
 
-// Default export
+// export as default
 export default pool;
 
-
-/*
-  ===========================
-  HELPERS
-  ===========================
-*/
 
 //Admin check
 export async function isAdmin(userId: number): Promise<boolean> {
