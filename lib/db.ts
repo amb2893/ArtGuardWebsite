@@ -7,23 +7,21 @@ const connectionString = process.env.DATABASE_URL ?? "postgres://postgres@localh
 
 // Extend global type to store the pool (avoids redeclaration)
 declare global {
-  // eslint-disable-next-line no-var
   var __pgPool__: Pool | undefined;
 }
 
-// Use existing global pool if present; otherwise create one
-const pool = global.__pgPool__ ?? new Pool({
-  connectionString,
-  ssl: process.env.DATABASE_URL ? { rejectUnauthorized: false } : false,
-});
+// Export pool immediately
+export const pool =
+  global.__pgPool__ ??
+  new Pool({
+    connectionString,
+    ssl: process.env.DATABASE_URL ? { rejectUnauthorized: false } : false,
+  });
 
 // Store in global variable for future module reloads
 if (!global.__pgPool__) {
   global.__pgPool__ = pool;
 }
-
-// Export once at the end
-export { pool };
 
 //Admin check
 export async function isAdmin(userId: number): Promise<boolean> {
