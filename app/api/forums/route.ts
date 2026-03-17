@@ -1,39 +1,21 @@
-// pages/forums/page.tsx
-import { getForumPosts } from "../../lib/db";
-import ForumsClient from "./components/ForumsClient";
-import { ForumPost } from "../../lib/types";
+// app/api/forums/route.ts
+import { NextResponse } from "next/server";
+import { getForumPosts } from "@/lib/db";
 
-export const revalidate = 60; // ISR
+// GET /api/forums
+export async function GET() {
+  try {
+    // Fetch latest forum posts (safe for builds)
+    const posts = await getForumPosts();
 
-export default async function ForumsPage() {
-    // Limit posts to last 50 to avoid long build
-    const posts: ForumPost[] = await getForumPosts(); // Add LIMIT 50 in the SQL query
+    // Return as JSON
+    return NextResponse.json(posts);
+  } catch (err) {
+    console.error("Failed to fetch forum posts:", err);
 
-    return (
-        <div className="forums-page">
-            <div className="forums-shell">
-                <header className="forums-header">
-                    <div>
-                        <p className="forums-eyebrow">Community Forum</p>
-                        <h1 className="forums-title">Community Forum</h1>
-                        <p className="forums-subtitle">
-                            AI policy changes, new products, and concerning developments
-                        </p>
-                    </div>
-                    <div className="forums-actions">
-                        <a className="forums-primary-btn" href="#new-topic">New Topic</a>
-                    </div>
-                </header>
-
-                <div className="forums-toolbar">
-                    <div className="forums-pill-group">
-                        <button className="forums-pill is-active" type="button">All Posts</button>
-                    </div>
-                    <div className="forums-sort">Latest Activity</div>
-                </div>
-
-                <ForumsClient initialPosts={posts} />
-            </div>
-        </div>
+    return NextResponse.json(
+      { error: "Failed to fetch forum posts" },
+      { status: 500 }
     );
+  }
 }
