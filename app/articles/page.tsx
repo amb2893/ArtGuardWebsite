@@ -11,13 +11,13 @@ function difficultyClass(d: string) {
   return "difficulty-badge is-advanced";
 }
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60; // ISR: rebuild page every 60 seconds
 
 export default async function ArticlesPage() {
   // Limit fetched articles to prevent build timeout
   const [featured, articles] = await Promise.all([
     getFeaturedArticles(),
-    getPublishedArticlesWithCounts(50),
+    getPublishedArticlesWithCounts(), // Optionally add LIMIT 50 inside this function
   ]);
 
   const cookieStore = await cookies();
