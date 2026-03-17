@@ -1,25 +1,19 @@
 // lib/db.ts
-import { Pool } from "pg";
+import { Pool } from 'pg';
 
 declare global {
-  // allow storing the pool instance on globalThis across module reloads
+  // allow a global variable to persist between module reloads in dev
   // eslint-disable-next-line no-var
   var __pgPool__: Pool | undefined;
 }
 
-const globalForDb = globalThis as unknown as { __pgPool__?: Pool };
-
-const pool = globalForDb.__pgPool__ ?? new Pool({
+const _pool = global.__pgPool__ ?? new Pool({
   connectionString: process.env.DATABASE_URL,
-  // optionally add ssl or other options if required:
-  // ssl: { rejectUnauthorized: false }
 });
 
-if (!globalForDb.__pgPool__) globalForDb.__pgPool__ = pool;
+if (!global.__pgPool__) global.__pgPool__ = _pool;
 
-export { pool };
-
-
+export const pool = _pool;
 
 //Admin check
 export async function isAdmin(userId: number): Promise<boolean> {
