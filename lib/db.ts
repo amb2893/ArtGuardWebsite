@@ -244,6 +244,13 @@ export async function denyPendingArticle(articleId: number) {
   }
 }
 
+export async function getPendingArticlesCount(): Promise<number> {
+  const res = await pool.query(
+    `SELECT COUNT(*)::int AS count FROM articles WHERE status = 'Pending Review'`
+  );
+  return res.rows[0]?.count ?? 0;
+}
+
 // Admin create draft
 export async function createDraftArticle(
   authorId: number,

@@ -2,7 +2,13 @@ import React from "react";
 import Link from "next/link";
 import { cookies } from "next/headers";
 import { verifyToken } from "../../lib/auth";
-import { getFeaturedArticles, getPublishedArticlesWithCounts, isAdmin, isTrusted } from "../../lib/db";
+import {
+  getFeaturedArticles,
+  getPublishedArticlesWithCounts,
+  isAdmin,
+  isTrusted,
+  getPendingArticlesCount,
+} from "../../lib/db";
 
 function difficultyClass(d: string) {
   if (d === "Beginner") return "difficulty-badge is-beginner";
@@ -25,6 +31,7 @@ export default async function ArticlesPage() {
     : [false, false];
 
   const canCreate = admin || trusted;
+  const pendingCount = admin ? await getPendingArticlesCount() : 0;
 
   return (
     <div className="articles-page">
@@ -35,13 +42,19 @@ export default async function ArticlesPage() {
           <p className="articles-subtitle">Explore articles on Art & AI</p>
         </div>
 
-        {canCreate && (
-          <div style={{ marginTop: 12 }}>
+        <div style={{ display: "flex", gap: 12, flexWrap: "wrap", alignItems: "center" }}>
+          {canCreate && (
             <Link href="/articles/new" className="btn-primary create-article-link">
               {admin ? "Create Article" : "Submit Article"}
             </Link>
-          </div>
-        )}
+          )}
+
+          {admin && (
+            <Link href="/admin/review" className="btn-secondary create-article-link">
+              Review Queue ({pendingCount})
+            </Link>
+          )}
+        </div>
       </header>
 
       {/* Featured */}
