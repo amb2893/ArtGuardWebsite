@@ -26,7 +26,8 @@ export default async function ArticleDetailPage({
       <h1>{article.title}</h1>
 
       {/* difficulty below title */}
-      <div style={{ marginTop: 10 }}>
+      <div style={{ marginTop: 10, display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
+        <span style={{ color: "#64748b", fontWeight: 600 }}>By {article.author}</span>
         <span className={difficultyClass(article.difficulty)}>{article.difficulty}</span>
       </div>
 

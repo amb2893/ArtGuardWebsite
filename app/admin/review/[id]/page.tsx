@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 import { verifyToken } from "../../../../lib/auth";
 import { getPendingArticleById, isAdmin } from "../../../../lib/db";
+import ReviewActions from "./ReviewActions";
 
 function difficultyClass(d: string) {
   if (d === "Beginner") return "difficulty-badge is-beginner";
@@ -33,7 +34,7 @@ export default async function AdminReviewDetailPage({
     <div style={{ padding: 40, maxWidth: 1000, margin: "0 auto" }}>
       <h1>{article.title}</h1>
 
-      <div style={{ marginTop: 10, display: "flex", gap: 12, alignItems: "center" }}>
+      <div style={{ marginTop: 10, display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
         <span className={difficultyClass(article.difficulty)}>{article.difficulty}</span>
         <span style={{ color: "#64748b", fontWeight: 600 }}>By {article.username}</span>
       </div>
@@ -42,15 +43,8 @@ export default async function AdminReviewDetailPage({
 
       <div style={{ whiteSpace: "pre-wrap", marginTop: 18 }}>{article.body}</div>
 
-      <div style={{ display: "flex", gap: 12, marginTop: 28 }}>
-        <form action={`/api/admin/articles/${article.id}/approve`} method="post">
-          <button type="submit">Approve & Publish</button>
-        </form>
-
-        <form action={`/api/admin/articles/${article.id}/deny`} method="post">
-          <button type="submit">Deny & Delete</button>
-        </form>
-      </div>
+      {/* Client-side buttons for popup + redirect */}
+      <ReviewActions articleId={article.id} />
     </div>
   );
 }

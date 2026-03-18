@@ -38,10 +38,22 @@ export async function POST(req: NextRequest) {
   const user = verifyToken(token);
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+  const body = await req.json().catch(() => null);
+  const id = body?.id ? Number(body.id) : null;
+
+  if (id && !Number.isNaN(id)) {
+    // mark single notification as read (only if belongs to user)
+    await pool.query(
+      `UPDATE notifications SET read_at = NOW() WHERE id = $1 AND user_id = $2`,
+      [id, user.id]
+    );
+    return NextResponse.json({ success: true });
+  }
+
+  // otherwise mark all as read
   await pool.query(
     `UPDATE notifications SET read_at = NOW() WHERE user_id = $1 AND read_at IS NULL`,
     [user.id]
   );
-
   return NextResponse.json({ success: true });
 }

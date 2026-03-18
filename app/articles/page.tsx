@@ -73,9 +73,8 @@ export default async function ArticlesPage() {
               <div className="featured-card-body">{a.blurb}</div>
 
               <div className="featured-card-meta">
-                <span>
-                  {a.comment_count} comment{a.comment_count === 1 ? "" : "s"}
-                </span>
+                <span>By {a.author}</span>
+                <span>{a.comment_count} comment{a.comment_count === 1 ? "" : "s"}</span>
                 <span className="featured-card-cta">Read →</span>
               </div>
             </Link>
@@ -93,6 +92,12 @@ export default async function ArticlesPage() {
                   <Link href={`/articles/${a.id}`}>{a.title}</Link>
                 </h2>
                 <span className={difficultyClass(a.difficulty)}>{a.difficulty}</span>
+              </div>
+
+              <div className="article-comments-muted" style={{ marginBottom: "0.6rem" }}>
+                By <strong>{a.username}</strong>
+                {" • "}
+                {a.published_at ? new Date(a.published_at).toLocaleDateString() : "Unpublished"}
               </div>
 
               <p className="article-body">{a.blurb}</p>

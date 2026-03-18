@@ -20,12 +20,35 @@ export default function NavbarNotifications({ enabled }: { enabled: boolean }) {
 
   async function load() {
     if (!enabled) return;
-    const res = await fetch("/api/notifications", { credentials: "same-origin", cache: "no-store" });
+    const res = await fetch("/api/notifications", {
+      credentials: "same-origin",
+      cache: "no-store",
+    });
     if (!res.ok) return;
     const json = await res.json().catch(() => null);
     if (!json) return;
     setUnread(json.unread || 0);
     setItems(json.notifications || []);
+  }
+
+  async function markOneRead(id: number) {
+    await fetch("/api/notifications", {
+      method: "POST",
+      credentials: "same-origin",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id }),
+    });
+    await load();
+  }
+
+  async function markAllRead() {
+    await fetch("/api/notifications", {
+      method: "POST",
+      credentials: "same-origin",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({}), // mark all
+    });
+    await load();
   }
 
   useEffect(() => {
@@ -48,11 +71,6 @@ export default function NavbarNotifications({ enabled }: { enabled: boolean }) {
     return () => document.removeEventListener("mousedown", onDocClick);
   }, [open]);
 
-  async function markAllRead() {
-    await fetch("/api/notifications", { method: "POST", credentials: "same-origin" });
-    await load();
-  }
-
   if (!enabled) return null;
 
   return (
@@ -67,8 +85,8 @@ export default function NavbarNotifications({ enabled }: { enabled: boolean }) {
         }}
         style={{
           background: "transparent",
-          border: "1px solid #e2e7f0",
-          color: "#111",
+          border: "1px solid var(--color-border)",
+          color: "var(--color-text)",
           padding: "0.4rem 0.75rem",
           borderRadius: 999,
           fontWeight: 700,
@@ -104,7 +122,7 @@ export default function NavbarNotifications({ enabled }: { enabled: boolean }) {
             marginTop: 10,
             width: 360,
             background: "white",
-            border: "1px solid #e6eaf2",
+            border: "1px solid var(--color-border)",
             borderRadius: 12,
             boxShadow: "0 16px 28px rgba(15, 26, 43, 0.12)",
             padding: 12,
@@ -135,14 +153,37 @@ export default function NavbarNotifications({ enabled }: { enabled: boolean }) {
                   <div style={{ fontSize: 12, color: "#64748b", marginBottom: 4 }}>
                     {new Date(n.created_at).toLocaleString()}
                   </div>
+
                   <div style={{ fontWeight: 700, marginBottom: 6 }}>{n.message}</div>
 
                   {n.article_id ? (
-                    <Link href={`/articles/${n.article_id}`} onClick={() => setOpen(false)}>
+                    <Link
+                      href={`/articles/${n.article_id}`}
+                      onClick={async () => {
+                        await markOneRead(n.id);
+                        setOpen(false);
+                      }}
+                    >
                       View article
                     </Link>
                   ) : (
-                    <span style={{ color: "#64748b" }} />
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        await markOneRead(n.id);
+                      }}
+                      style={{
+                        background: "transparent",
+                        border: "none",
+                        padding: 0,
+                        color: "var(--color-primary)",
+                        textDecoration: "underline",
+                        cursor: "pointer",
+                        fontWeight: 700,
+                      }}
+                    >
+                      Mark as read
+                    </button>
                   )}
                 </div>
               ))}

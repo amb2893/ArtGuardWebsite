@@ -32,29 +32,18 @@ export async function getPublishedArticlesWithCounts() {
       ar.difficulty,
       ar.created_at,
       ar.published_at,
+      a.username,
       COUNT(ac.id)::int AS comment_count
     FROM articles ar
+    JOIN accounts a ON a.id = ar.author_id
     LEFT JOIN article_comments ac ON ac.article_id = ar.id
     WHERE ar.is_published = TRUE
-    GROUP BY ar.id
+    GROUP BY ar.id, a.username
     ORDER BY ar.published_at DESC NULLS LAST, ar.created_at DESC
   `.trim();
 
-  try {
-    const res = await pool.query(sql);
-    return res.rows;
-  } catch (err: any) {
-    console.error("PG ERROR:", err.message);
-    console.error("PG POSITION:", err.position);
-    console.error("SQL SENT:\n" + sql);
-
-    // If Postgres gave a character position, show the area around it:
-    if (err.position) {
-      const pos = Number(err.position);
-      console.error("SQL AROUND POSITION:\n" + sql.slice(Math.max(0, pos - 50), pos + 50));
-    }
-    throw err;
-  }
+  const res = await pool.query(sql);
+  return res.rows;
 }
 
 export async function getFeaturedArticles() {
@@ -67,11 +56,13 @@ export async function getFeaturedArticles() {
         ar.difficulty,
         ar.published_at,
         ar.created_at,
+        a.username AS author,
         COUNT(ac.id)::int AS comment_count
       FROM articles ar
+      JOIN accounts a ON a.id = ar.author_id
       LEFT JOIN article_comments ac ON ac.article_id = ar.id
       WHERE ar.is_published = TRUE
-      GROUP BY ar.id
+      GROUP BY ar.id, a.username
       ORDER BY ar.published_at DESC NULLS LAST, ar.created_at DESC
       LIMIT 3
     ),
@@ -83,11 +74,13 @@ export async function getFeaturedArticles() {
         ar.difficulty,
         ar.published_at,
         ar.created_at,
+        a.username AS author,
         COUNT(ac.id)::int AS comment_count
       FROM articles ar
+      JOIN accounts a ON a.id = ar.author_id
       LEFT JOIN article_comments ac ON ac.article_id = ar.id
       WHERE ar.is_published = TRUE
-      GROUP BY ar.id
+      GROUP BY ar.id, a.username
       ORDER BY COUNT(ac.id) DESC, ar.published_at DESC NULLS LAST, ar.created_at DESC
       LIMIT 3
     ),
@@ -121,9 +114,19 @@ export async function getArticleCommentsByArticle(articleId: number) {
 export async function getPublishedArticleById(id: number) {
   const res = await pool.query(
     `
-    SELECT id, title, blurb, body, url, difficulty, created_at, published_at
-    FROM articles
-    WHERE id = $1 AND is_published = TRUE
+    SELECT
+      ar.id,
+      ar.title,
+      ar.blurb,
+      ar.body,
+      ar.url,
+      ar.difficulty,
+      ar.created_at,
+      ar.published_at,
+      a.username AS author
+    FROM articles ar
+    JOIN accounts a ON a.id = ar.author_id
+    WHERE ar.id = $1 AND ar.is_published = TRUE
     LIMIT 1
     `,
     [id]
