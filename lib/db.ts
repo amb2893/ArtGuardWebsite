@@ -2,14 +2,19 @@
 import { Pool } from "pg";
 import { Website } from "./types";
 
-const defaultLocalConnection = "postgres://postgres@localhost:5432/artguard";
+const defaultLocalConnection = "postgres://postgres:password@localhost:5432/artguard";
 const connectionString = process.env.DATABASE_URL ?? defaultLocalConnection;
 
 const pool = new Pool({
   connectionString,
 });
 
-//Admin check
+//Role check
+export async function isTrusted(userId: number): Promise<boolean> {
+  const res = await pool.query("SELECT is_trusted FROM accounts WHERE id = $1", [userId]);
+  return Boolean(res.rows[0]?.is_trusted);
+}
+
 export async function isAdmin(userId: number): Promise<boolean> {
   const res = await pool.query("SELECT is_admin FROM accounts WHERE id = $1", [userId]);
   return Boolean(res.rows[0]?.is_admin);
@@ -124,6 +129,87 @@ export async function getPublishedArticleById(id: number) {
     [id]
   );
   return res.rows[0] ?? null;
+}
+
+export async function createPendingArticle(
+  authorId: number,
+  title: string,
+  body: string,
+  blurb: string,
+  difficulty: "Beginner" | "Intermediate" | "Advanced"
+) {
+  const res = await pool.query(
+    `
+    INSERT INTO articles (author_id, title, body, blurb, difficulty, url, is_published, status, submitted_at, created_at, updated_at)
+    VALUES ($1, $2, $3, $4, $5, NULL, FALSE, 'Pending Review', NOW(), NOW(), NOW())
+    RETURNING id, title, status, submitted_at
+    `,
+    [authorId, title, body, blurb, difficulty]
+  );
+  return res.rows[0];
+}
+
+export async function notifyUser(userId: number, type: string, message: string, articleId: number | null) {
+  await pool.query(
+    `INSERT INTO notifications (user_id, type, message, article_id) VALUES ($1, $2, $3, $4)`,
+    [userId, type, message, articleId]
+  );
+}
+
+export async function getPendingArticles() {
+  const res = await pool.query(
+    `
+    SELECT ar.id, ar.author_id, a.username, ar.title, ar.blurb, ar.difficulty, ar.submitted_at, ar.created_at
+    FROM articles ar
+    JOIN accounts a ON a.id = ar.author_id
+    WHERE ar.status = 'Pending Review'
+    ORDER BY ar.submitted_at DESC NULLS LAST, ar.created_at DESC
+    `
+  );
+  return res.rows;
+}
+
+export async function approvePendingArticle(articleId: number) {
+  const res = await pool.query(
+    `
+    UPDATE articles
+    SET status = 'Published',
+        is_published = TRUE,
+        published_at = NOW(),
+        updated_at = NOW()
+    WHERE id = $1 AND status = 'Pending Review'
+    RETURNING id, author_id, title
+    `,
+    [articleId]
+  );
+  return res.rows[0] ?? null;
+}
+
+export async function denyPendingArticle(articleId: number) {
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+
+    const found = await client.query(
+      `SELECT id, author_id, title FROM articles WHERE id = $1 AND status = 'Pending Review'`,
+      [articleId]
+    );
+    const row = found.rows[0];
+    if (!row) {
+      await client.query("ROLLBACK");
+      return null;
+    }
+
+    await client.query(`DELETE FROM articles WHERE id = $1`, [articleId]);
+
+    await client.query("COMMIT");
+    return row as { id: number; author_id: number; title: string };
+  } catch (e) {
+    await client.query("ROLLBACK");
+    throw e;
+  } finally {
+    client.release();
+  }
 }
 
 // Admin create draft
