@@ -5,6 +5,8 @@ import React, { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import NavbarNotifications from "./NavBarNotifications";
 
+console.log("NavbarNotifications import:", NavbarNotifications);
+
 type Props = {
   loggedIn: boolean;
   username?: string | null;
