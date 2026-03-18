@@ -187,6 +187,20 @@ export async function getPendingArticles() {
   return res.rows;
 }
 
+export async function getPendingArticleById(id: number) {
+  const res = await pool.query(
+    `
+    SELECT ar.id, ar.author_id, a.username, ar.title, ar.blurb, ar.body, ar.difficulty, ar.submitted_at, ar.created_at
+    FROM articles ar
+    JOIN accounts a ON a.id = ar.author_id
+    WHERE ar.id = $1 AND ar.status = 'Pending Review'
+    LIMIT 1
+    `,
+    [id]
+  );
+  return res.rows[0] ?? null;
+}
+
 export async function approvePendingArticle(articleId: number) {
   const res = await pool.query(
     `
