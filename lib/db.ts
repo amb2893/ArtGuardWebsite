@@ -131,6 +131,24 @@ export async function getPublishedArticleById(id: number) {
   return res.rows[0] ?? null;
 }
 
+export async function createPublishedArticle(
+  authorId: number,
+  title: string,
+  body: string,
+  blurb: string,
+  difficulty: "Beginner" | "Intermediate" | "Advanced"
+) {
+  const res = await pool.query(
+    `
+    INSERT INTO articles (author_id, title, body, blurb, difficulty, url, is_published, status, published_at, created_at, updated_at)
+    VALUES ($1, $2, $3, $4, $5, NULL, TRUE, 'Published', NOW(), NOW(), NOW())
+    RETURNING id, title, status, published_at
+    `,
+    [authorId, title, body, blurb, difficulty]
+  );
+  return res.rows[0];
+}
+
 export async function createPendingArticle(
   authorId: number,
   title: string,

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyToken } from "../../../../lib/auth";
-import { isAdmin, isTrusted, createPendingArticle, createDraftArticle } from "../../../../lib/db";
+import { isAdmin, isTrusted, createPendingArticle, createPublishedArticle } from "../../../../lib/db";
 
 export const runtime = "nodejs";
 
@@ -18,15 +18,15 @@ export async function POST(req: NextRequest) {
     if (!admin && !trusted) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
     const { title, body, blurb, difficulty } = await req.json();
+    if (!title || !body || !blurb) {
+      return NextResponse.json({ error: "Missing title/body/blurb" }, { status: 400 });
+    }
 
-    if (!title || !body || !blurb) return NextResponse.json({ error: "Missing title/body/blurb" }, { status: 400 });
     const diff = String(difficulty || "Beginner");
     if (!allowed.has(diff)) return NextResponse.json({ error: "Invalid difficulty" }, { status: 400 });
 
-    // Admins: create draft then publish using existing publish endpoint (your current flow)
-    // Trusted users: create pending review
     const created = admin
-      ? await createDraftArticle(user.id, String(title).trim(), String(body).trim(), String(blurb).trim(), diff as any)
+      ? await createPublishedArticle(user.id, String(title).trim(), String(body).trim(), String(blurb).trim(), diff as any)
       : await createPendingArticle(user.id, String(title).trim(), String(body).trim(), String(blurb).trim(), diff as any);
 
     return NextResponse.json(created, { status: 201 });
