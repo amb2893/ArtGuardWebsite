@@ -85,6 +85,7 @@ export default function SignupPage() {
           onChange={(e) => setUsername(e.target.value)}
           required
           placeholder="Enter your username"
+          title="Choose a unique username for your account"
           autoComplete="username"
           aria-invalid={Boolean(error)}
           aria-describedby={errorId}
@@ -98,6 +99,7 @@ export default function SignupPage() {
           onChange={(e) => setPassword(e.target.value)}
           required
           placeholder="Enter password"
+          title="Enter a strong password meeting the requirements shown below"
           autoComplete="new-password"
           aria-invalid={Boolean(error)}
           aria-describedby={errorId ? `${errorId} signup-password-requirements` : "signup-password-requirements"}
@@ -134,6 +136,7 @@ export default function SignupPage() {
           onChange={(e) => setConfirmPassword(e.target.value)}
           required
           placeholder="Confirm password"
+          title="Re-enter your password to confirm it matches"
           autoComplete="new-password"
           aria-invalid={Boolean(error) || (confirmPassword.length > 0 && !matches)}
           aria-describedby={errorId ? `${errorId} password-match-status` : "password-match-status"}

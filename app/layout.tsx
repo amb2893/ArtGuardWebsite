@@ -21,7 +21,11 @@ export default async function RootLayout({
 
     return (
         <html lang="en">
+            <head>
+                <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+            </head>
             <body>
+                <a href="#main-content" className="sr-only skip-link">Skip to main content</a>
                 <NavBar loggedIn={loggedIn} username={username} />
                 <ActivityMonitor />
                 <main id="main-content" tabIndex={-1}>{children}</main>

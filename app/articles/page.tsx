@@ -2,7 +2,13 @@ import React from "react";
 import Link from "next/link";
 import { cookies } from "next/headers";
 import { verifyToken } from "../../lib/auth";
-import { getFeaturedArticles, getPublishedArticlesWithCounts, isAdmin } from "../../lib/db";
+import {
+  getFeaturedArticles,
+  getPublishedArticlesWithCounts,
+  isAdmin,
+  isTrusted,
+  getPendingArticlesCount,
+} from "../../lib/db";
 
 function difficultyClass(d: string) {
   if (d === "Beginner") return "difficulty-badge is-beginner";
@@ -19,7 +25,13 @@ export default async function ArticlesPage() {
   const cookieStore = await cookies();
   const token = cookieStore.get("token")?.value;
   const user = token ? verifyToken(token) : null;
-  const admin = user ? await isAdmin(user.id) : false;
+
+  const [admin, trusted] = user
+    ? await Promise.all([isAdmin(user.id), isTrusted(user.id)])
+    : [false, false];
+
+  const canCreate = admin || trusted;
+  const pendingCount = admin ? await getPendingArticlesCount() : 0;
 
   return (
     <div className="articles-page">
@@ -30,13 +42,19 @@ export default async function ArticlesPage() {
           <p className="articles-subtitle">Explore articles on Art & AI</p>
         </div>
 
-        {admin && (
-          <div style={{ marginTop: 12 }}>
+        <div style={{ display: "flex", gap: 12, flexWrap: "wrap", alignItems: "center" }}>
+          {canCreate && (
             <Link href="/articles/new" className="btn-primary create-article-link">
-              Create Article
+              {admin ? "Create Article" : "Submit Article"}
             </Link>
-          </div>
-        )}
+          )}
+
+          {admin && (
+            <Link href="/admin/review" className="btn-secondary create-article-link">
+              Review Queue ({pendingCount})
+            </Link>
+          )}
+        </div>
       </header>
 
       {/* Featured */}
@@ -49,13 +67,13 @@ export default async function ArticlesPage() {
         <div className="featured-grid">
           {featured.map((a: any) => (
             <Link key={a.id} href={`/articles/${a.id}`} className="featured-card">
-              {/* difficulty on top, above title */}
               <div className={difficultyClass(a.difficulty)}>{a.difficulty}</div>
 
               <div className="featured-card-title">{a.title}</div>
               <div className="featured-card-body">{a.blurb}</div>
 
               <div className="featured-card-meta">
+                <span>By {a.author}</span>
                 <span>{a.comment_count} comment{a.comment_count === 1 ? "" : "s"}</span>
                 <span className="featured-card-cta">Read →</span>
               </div>
@@ -69,12 +87,17 @@ export default async function ArticlesPage() {
         {articles.map((a: any) => (
           <article key={a.id} className="article-card">
             <div className="article-content">
-              {/* difficulty on same line as title */}
               <div className="article-title-row">
                 <h2 className="article-title">
                   <Link href={`/articles/${a.id}`}>{a.title}</Link>
                 </h2>
                 <span className={difficultyClass(a.difficulty)}>{a.difficulty}</span>
+              </div>
+
+              <div className="article-comments-muted" style={{ marginBottom: "0.6rem" }}>
+                By <strong>{a.username}</strong>
+                {" • "}
+                {a.published_at ? new Date(a.published_at).toLocaleDateString() : "Unpublished"}
               </div>
 
               <p className="article-body">{a.blurb}</p>

@@ -2,6 +2,8 @@
 
 import React, { useState } from "react";
 import "../styles/globals.css";
+import PopularThreads from "./components/PopularThreads";
+import PopularWebsites from "./components/PopularWebsites";
 
 export default function HomePage() {
     const [count, setCount] = useState(0);
@@ -80,9 +82,14 @@ export default function HomePage() {
                 </div>
             </div>
 
-            <div className="tools-section">
+            <section className="tools-section">
                 <h2 className="tools-heading">POWERFUL PROTECTION TOOLS</h2>
                 <p className="tools-subheading">Everything you need to defend your creative work from unauthorized AI training and web scraping</p>
+            </section>
+
+            <div className="popular-content-section">
+                <PopularThreads />
+                <PopularWebsites />
             </div>
         </>
     );

@@ -2,14 +2,19 @@
 import { Pool } from "pg";
 import { Website } from "./types";
 
-const defaultLocalConnection = "postgres://postgres@localhost:5432/artguard";
+const defaultLocalConnection = "postgres://postgres:password@localhost:5432/artguard";
 const connectionString = process.env.DATABASE_URL ?? defaultLocalConnection;
 
 const pool = new Pool({
   connectionString,
 });
 
-//Admin check
+//Role check
+export async function isTrusted(userId: number): Promise<boolean> {
+  const res = await pool.query("SELECT is_trusted FROM accounts WHERE id = $1", [userId]);
+  return Boolean(res.rows[0]?.is_trusted);
+}
+
 export async function isAdmin(userId: number): Promise<boolean> {
   const res = await pool.query("SELECT is_admin FROM accounts WHERE id = $1", [userId]);
   return Boolean(res.rows[0]?.is_admin);
@@ -27,29 +32,18 @@ export async function getPublishedArticlesWithCounts() {
       ar.difficulty,
       ar.created_at,
       ar.published_at,
+      a.username,
       COUNT(ac.id)::int AS comment_count
     FROM articles ar
+    JOIN accounts a ON a.id = ar.author_id
     LEFT JOIN article_comments ac ON ac.article_id = ar.id
     WHERE ar.is_published = TRUE
-    GROUP BY ar.id
+    GROUP BY ar.id, a.username
     ORDER BY ar.published_at DESC NULLS LAST, ar.created_at DESC
   `.trim();
 
-  try {
-    const res = await pool.query(sql);
-    return res.rows;
-  } catch (err: any) {
-    console.error("PG ERROR:", err.message);
-    console.error("PG POSITION:", err.position);
-    console.error("SQL SENT:\n" + sql);
-
-    // If Postgres gave a character position, show the area around it:
-    if (err.position) {
-      const pos = Number(err.position);
-      console.error("SQL AROUND POSITION:\n" + sql.slice(Math.max(0, pos - 50), pos + 50));
-    }
-    throw err;
-  }
+  const res = await pool.query(sql);
+  return res.rows;
 }
 
 export async function getFeaturedArticles() {
@@ -62,11 +56,13 @@ export async function getFeaturedArticles() {
         ar.difficulty,
         ar.published_at,
         ar.created_at,
+        a.username AS author,
         COUNT(ac.id)::int AS comment_count
       FROM articles ar
+      JOIN accounts a ON a.id = ar.author_id
       LEFT JOIN article_comments ac ON ac.article_id = ar.id
       WHERE ar.is_published = TRUE
-      GROUP BY ar.id
+      GROUP BY ar.id, a.username
       ORDER BY ar.published_at DESC NULLS LAST, ar.created_at DESC
       LIMIT 3
     ),
@@ -78,11 +74,13 @@ export async function getFeaturedArticles() {
         ar.difficulty,
         ar.published_at,
         ar.created_at,
+        a.username AS author,
         COUNT(ac.id)::int AS comment_count
       FROM articles ar
+      JOIN accounts a ON a.id = ar.author_id
       LEFT JOIN article_comments ac ON ac.article_id = ar.id
       WHERE ar.is_published = TRUE
-      GROUP BY ar.id
+      GROUP BY ar.id, a.username
       ORDER BY COUNT(ac.id) DESC, ar.published_at DESC NULLS LAST, ar.created_at DESC
       LIMIT 3
     ),
@@ -116,14 +114,144 @@ export async function getArticleCommentsByArticle(articleId: number) {
 export async function getPublishedArticleById(id: number) {
   const res = await pool.query(
     `
-    SELECT id, title, blurb, body, url, difficulty, created_at, published_at
-    FROM articles
-    WHERE id = $1 AND is_published = TRUE
+    SELECT
+      ar.id,
+      ar.title,
+      ar.blurb,
+      ar.body,
+      ar.url,
+      ar.difficulty,
+      ar.created_at,
+      ar.published_at,
+      a.username AS author
+    FROM articles ar
+    JOIN accounts a ON a.id = ar.author_id
+    WHERE ar.id = $1 AND ar.is_published = TRUE
     LIMIT 1
     `,
     [id]
   );
   return res.rows[0] ?? null;
+}
+
+export async function createPublishedArticle(
+  authorId: number,
+  title: string,
+  body: string,
+  blurb: string,
+  difficulty: "Beginner" | "Intermediate" | "Advanced"
+) {
+  const res = await pool.query(
+    `
+    INSERT INTO articles (author_id, title, body, blurb, difficulty, url, is_published, status, published_at, created_at, updated_at)
+    VALUES ($1, $2, $3, $4, $5, NULL, TRUE, 'Published', NOW(), NOW(), NOW())
+    RETURNING id, title, status, published_at
+    `,
+    [authorId, title, body, blurb, difficulty]
+  );
+  return res.rows[0];
+}
+
+export async function createPendingArticle(
+  authorId: number,
+  title: string,
+  body: string,
+  blurb: string,
+  difficulty: "Beginner" | "Intermediate" | "Advanced"
+) {
+  const res = await pool.query(
+    `
+    INSERT INTO articles (author_id, title, body, blurb, difficulty, url, is_published, status, submitted_at, created_at, updated_at)
+    VALUES ($1, $2, $3, $4, $5, NULL, FALSE, 'Pending Review', NOW(), NOW(), NOW())
+    RETURNING id, title, status, submitted_at
+    `,
+    [authorId, title, body, blurb, difficulty]
+  );
+  return res.rows[0];
+}
+
+export async function notifyUser(userId: number, type: string, message: string, articleId: number | null) {
+  await pool.query(
+    `INSERT INTO notifications (user_id, type, message, article_id) VALUES ($1, $2, $3, $4)`,
+    [userId, type, message, articleId]
+  );
+}
+
+export async function getPendingArticles() {
+  const res = await pool.query(
+    `
+    SELECT ar.id, ar.author_id, a.username, ar.title, ar.blurb, ar.difficulty, ar.submitted_at, ar.created_at
+    FROM articles ar
+    JOIN accounts a ON a.id = ar.author_id
+    WHERE ar.status = 'Pending Review'
+    ORDER BY ar.submitted_at DESC NULLS LAST, ar.created_at DESC
+    `
+  );
+  return res.rows;
+}
+
+export async function getPendingArticleById(id: number) {
+  const res = await pool.query(
+    `
+    SELECT ar.id, ar.author_id, a.username, ar.title, ar.blurb, ar.body, ar.difficulty, ar.submitted_at, ar.created_at
+    FROM articles ar
+    JOIN accounts a ON a.id = ar.author_id
+    WHERE ar.id = $1 AND ar.status = 'Pending Review'
+    LIMIT 1
+    `,
+    [id]
+  );
+  return res.rows[0] ?? null;
+}
+
+export async function approvePendingArticle(articleId: number) {
+  const res = await pool.query(
+    `
+    UPDATE articles
+    SET status = 'Published',
+        is_published = TRUE,
+        published_at = NOW(),
+        updated_at = NOW()
+    WHERE id = $1 AND status = 'Pending Review'
+    RETURNING id, author_id, title
+    `,
+    [articleId]
+  );
+  return res.rows[0] ?? null;
+}
+
+export async function denyPendingArticle(articleId: number) {
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+
+    const found = await client.query(
+      `SELECT id, author_id, title FROM articles WHERE id = $1 AND status = 'Pending Review'`,
+      [articleId]
+    );
+    const row = found.rows[0];
+    if (!row) {
+      await client.query("ROLLBACK");
+      return null;
+    }
+
+    await client.query(`DELETE FROM articles WHERE id = $1`, [articleId]);
+
+    await client.query("COMMIT");
+    return row as { id: number; author_id: number; title: string };
+  } catch (e) {
+    await client.query("ROLLBACK");
+    throw e;
+  } finally {
+    client.release();
+  }
+}
+
+export async function getPendingArticlesCount(): Promise<number> {
+  const res = await pool.query(
+    `SELECT COUNT(*)::int AS count FROM articles WHERE status = 'Pending Review'`
+  );
+  return res.rows[0]?.count ?? 0;
 }
 
 // Admin create draft
@@ -213,6 +341,28 @@ export async function updateForumPost(postId: number, title: string, body: strin
         [title, body, postId]
     );
     return res.rows[0];
+}
+
+// Get popular forum threads (by comment count)
+export async function getPopularForumThreads(limit: number = 5) {
+    const res = await pool.query(
+        `SELECT 
+            f.id, 
+            f.title, 
+            f.body, 
+            f.author_id, 
+            a.username, 
+            f.created_at,
+            COUNT(c.id)::INTEGER as comment_count
+         FROM discussion_forum f
+         JOIN accounts a ON f.author_id = a.id
+         LEFT JOIN comments c ON c.post_id = f.id
+         GROUP BY f.id, f.title, f.body, f.author_id, a.username, f.created_at
+         ORDER BY comment_count DESC, f.created_at DESC
+         LIMIT $1`,
+        [limit]
+    );
+    return res.rows;
 }
 
 // Comments
@@ -341,6 +491,26 @@ export async function getTopRatedWebsites(): Promise<Website[]> {
         ORDER BY report_count DESC
         LIMIT 3
     `);
+    return res.rows;
+}
+
+// Get popular websites by combined ratings and reviews count
+export async function getPopularWebsites(limit: number = 5) {
+    const res = await pool.query(`
+        SELECT 
+            w.id, 
+            w.website_name, 
+            COALESCE(COUNT(DISTINCT r.id), 0)::INTEGER as rating_count,
+            COALESCE(COUNT(DISTINCT rr.id), 0)::INTEGER as review_count,
+            (COALESCE(COUNT(DISTINCT r.id), 0) + COALESCE(COUNT(DISTINCT rr.id), 0))::INTEGER as total_activity
+        FROM websites w
+        LEFT JOIN ratings r ON w.id = r.website_id
+        LEFT JOIN ratings_reviews rr ON w.id = rr.website_id
+        GROUP BY w.id, w.website_name
+        HAVING (COALESCE(COUNT(DISTINCT r.id), 0) + COALESCE(COUNT(DISTINCT rr.id), 0)) > 0
+        ORDER BY total_activity DESC, w.website_name ASC
+        LIMIT $1
+    `, [limit]);
     return res.rows;
 }
 

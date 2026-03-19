@@ -24,7 +24,8 @@ export default function NewArticlePage() {
 
     setLoading(true);
     try {
-      const createRes = await fetch("/api/admin/articles", {
+      //trusted users submit for review; admins publish automatically
+      const res = await fetch("/api/articles/submit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "same-origin",
@@ -36,25 +37,21 @@ export default function NewArticlePage() {
         }),
       });
 
-      const createJson = await createRes.json().catch(() => ({}));
-      if (!createRes.ok) {
-        setError(createJson?.error || "Failed to create article.");
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(json?.error || "Failed to submit article.");
         return;
       }
 
-      const articleId = createJson.id;
-
-      const pubRes = await fetch(`/api/admin/articles/${articleId}/publish`, {
-        method: "POST",
-        credentials: "same-origin",
-      });
-
-      const pubJson = await pubRes.json().catch(() => ({}));
-      if (!pubRes.ok) {
-        setError(pubJson?.error || "Failed to publish article.");
+      // Trusted user flow: pending review
+      if (json.status === "Pending Review") {
+        alert("Submitted for review! An admin will review your article.");
+        window.location.href = "/articles";
         return;
       }
 
+      // Admin flow: published
+      const articleId = json.id;
       window.location.href = `/articles/${articleId}`;
     } catch {
       setError("Network error.");
@@ -97,7 +94,7 @@ export default function NewArticlePage() {
         <textarea id="body" rows={14} value={body} onChange={(e) => setBody(e.target.value)} />
 
         <button type="submit" disabled={loading}>
-          {loading ? "Publishing..." : "Publish"}
+          {loading ? "Submitting..." : "Submit"}
         </button>
       </form>
     </div>
