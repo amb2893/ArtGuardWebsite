@@ -58,6 +58,11 @@ export async function getFeaturedArticles() {
         ar.created_at,
         a.username AS author,
         COUNT(ac.id)::int AS comment_count
+      export interface RatingTimeSeriesPoint {
+        date: string;
+        positive_count: number;
+        negative_count: number;
+      }
       FROM articles ar
       JOIN accounts a ON a.id = ar.author_id
       LEFT JOIN article_comments ac ON ac.article_id = ar.id
@@ -455,6 +460,28 @@ export async function createOrUpdateRating(websiteId: number, userId: number, ra
         [websiteId, userId, rating]
     );
     return res.rows[0];
+}
+
+export async function getRatingTimeSeries(websiteId: number, granularity: string) {
+  const intervalMap: Record<string, string> = {
+    daily: "day",
+    weekly: "week",
+    monthly: "month",
+  };
+  const interval = intervalMap[granularity] || "day";
+
+  const res = await pool.query(
+    `SELECT
+        date_trunc($2, created_at) AS date,
+        COUNT(CASE WHEN rating = 1 THEN 1 END)::int AS positive_count,
+        COUNT(CASE WHEN rating = -1 THEN 1 END)::int AS negative_count
+      FROM ratings
+      WHERE website_id = $1
+      GROUP BY date
+      ORDER BY date ASC`,
+      [websiteId, interval]
+  );
+  return res.rows;
 }
 
 // Increment report count

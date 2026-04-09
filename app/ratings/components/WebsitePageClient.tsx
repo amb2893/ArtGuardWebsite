@@ -4,6 +4,8 @@ import { useState } from "react";
 import { Website } from "../../../lib/types";
 import { useRouter } from "next/navigation";
 import RatingReviewsSection from "./RatingReviewsSection";
+import RatingsChart from "./RatingsChart";
+
 
 interface Props {
     website: Website;
@@ -144,6 +146,7 @@ export default function WebsitePageClient({ website, ratingsData, userRating: in
                                 Your rating: {userRating === 1 ? "👍 Positive" : "👎 Negative"}
                             </div>
                         )}
+                        <RatingsChart websiteId={website.id} />
                         <div className="rate-buttons-container">
                             <button
                                 onClick={() => handleRate(1)}

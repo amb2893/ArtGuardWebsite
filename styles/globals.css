@@ -1494,6 +1494,104 @@ form button {
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(255, 22, 84, 0.2);
 }
+/* ==========================
+   Ratings Chart
+========================== */
+
+.ratings-chart-card {
+    background: white;
+    border-radius: 12px;
+    padding: 2.5rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    border: 2px solid #f0f0f0;
+    transition: border-color 0.3s;
+}
+
+.ratings-chart-card:hover {
+    border-color: #ff1654;
+}
+
+.ratings-chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.ratings-chart-header .website-card-title {
+    margin-bottom: 0;
+}
+
+.ratings-chart-toggle {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.chart-toggle-btn {
+    padding: 0.5rem 1rem;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    background: white;
+    font-family: 'Manrope', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #666;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.chart-toggle-btn:hover {
+    border-color: #ff1654;
+    color: #ff1654;
+}
+
+.chart-toggle-active {
+    background: linear-gradient(135deg, #ff1654, #e00a44);
+    color: white;
+    border-color: transparent;
+}
+
+.chart-toggle-active:hover {
+    color: white;
+}
+
+.ratings-chart-body {
+    min-height: 100px;
+}
+
+.ratings-chart-container {
+    position: relative;
+    height: 350px;
+}
+
+.ratings-chart-loading,
+.ratings-chart-error,
+.ratings-chart-empty {
+    text-align: center;
+    padding: 3rem 1rem;
+    font-family: 'Manrope', sans-serif;
+    color: #888;
+    font-size: 1rem;
+}
+
+.ratings-chart-error {
+    color: #ef4444;
+}
+
+@media (max-width: 600px) {
+    .ratings-chart-header {
+        flex-direction: column;
+    }
+    .ratings-chart-container {
+        height: 250px;
+    }
+    .ratings-chart-card {
+        padding: 1.5rem;
+    }
+}
 
 /* ==========================
    Search Results Styling
