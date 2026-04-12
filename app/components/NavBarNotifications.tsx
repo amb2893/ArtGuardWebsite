@@ -38,7 +38,11 @@ export default function NavbarNotifications({ enabled }: { enabled: boolean }) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id }),
     });
-    await load();
+
+    setItems((prev) =>
+      prev.map((n) => (n.id === id ? { ...n, read_at: n.read_at ?? new Date().toISOString() } : n))
+    );
+    setUnread((prev) => Math.max(0, prev - 1));
   }
 
   async function markAllRead() {
@@ -48,14 +52,13 @@ export default function NavbarNotifications({ enabled }: { enabled: boolean }) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({}), // mark all
     });
-    await load();
+
+    setItems((prev) => prev.map((n) => ({ ...n, read_at: n.read_at ?? new Date().toISOString() })));
+    setUnread(0);
   }
 
   useEffect(() => {
-    if (!enabled) return;
-    load();
-    const t = setInterval(load, 15000);
-    return () => clearInterval(t);
+    return;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [enabled]);
 

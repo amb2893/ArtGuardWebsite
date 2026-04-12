@@ -7,9 +7,10 @@ import NewRatingReviewForm from "./NewRatingReviewForm";
 
 interface Props {
     websiteId: number;
+    currentUserId: number | null;
 }
 
-export default function RatingReviewsSection({ websiteId }: Props) {
+export default function RatingReviewsSection({ websiteId, currentUserId }: Props) {
     const [reviews, setReviews] = useState<RatingReview[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -45,6 +46,35 @@ export default function RatingReviewsSection({ websiteId }: Props) {
         setReviews((prev) => [...prev, r]);
     }
 
+    async function handleUpdateReview(reviewId: number, body: string, tags: string[]) {
+        const res = await fetch(`/api/ratings/${websiteId}/reviews/${reviewId}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            credentials: "same-origin",
+            body: JSON.stringify({ body, tags }),
+        });
+
+        if (!res.ok) {
+            throw new Error("Failed to update review");
+        }
+
+        const updated: RatingReview = await res.json();
+        setReviews((prev) => prev.map((review) => (review.id === reviewId ? updated : review)));
+    }
+
+    async function handleDeleteReview(reviewId: number) {
+        const res = await fetch(`/api/ratings/${websiteId}/reviews/${reviewId}`, {
+            method: "DELETE",
+            credentials: "same-origin",
+        });
+
+        if (!res.ok) {
+            throw new Error("Failed to delete review");
+        }
+
+        setReviews((prev) => prev.filter((review) => review.id !== reviewId));
+    }
+
     return (
         <div className="rating-reviews">
             <div className="rating-reviews-header">
@@ -52,11 +82,18 @@ export default function RatingReviewsSection({ websiteId }: Props) {
                     Leave a Review <em>(optional)</em>
                 </h3>
             </div>
-            <NewRatingReviewForm websiteId={websiteId} onCreated={handleNewReview} />
+            <NewRatingReviewForm websiteId={websiteId} onCreated={handleNewReview} canSubmit={currentUserId !== null} />
             <div className="rating-reviews-body">
                 {loading && <div className="rating-reviews-muted">Loading reviews...</div>}
                 {error && <div className="rating-reviews-error">{error}</div>}
-                {!loading && !error && <RatingReviewsList reviews={reviews} />}
+                {!loading && !error && (
+                    <RatingReviewsList
+                        reviews={reviews}
+                        currentUserId={currentUserId}
+                        onUpdate={handleUpdateReview}
+                        onDelete={handleDeleteReview}
+                    />
+                )}
             </div>
         </div>
     );

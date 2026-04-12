@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCommentsByPost, addComment } from "../../../../../lib/db";
 import { verifyToken } from "../../../../../lib/auth";
+import { apiErrorResponse } from "../../../../../lib/apiErrors";
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
     try {
@@ -11,8 +12,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
         const comments = await getCommentsByPost(id);
         return NextResponse.json(comments);
     } catch (err) {
-        console.error("/api/forums/[id]/comments GET error:", err);
-        return NextResponse.json({ error: "Server error" }, { status: 500 });
+        return apiErrorResponse("/api/forums/[id]/comments GET", err, "Failed to load comments");
     }
 }
 
@@ -37,7 +37,6 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
         const comment = await addComment(id, user.id, body);
         return NextResponse.json(comment, { status: 201 });
     } catch (err) {
-        console.error("/api/forums/[id]/comments POST error:", err);
-        return NextResponse.json({ error: "Failed to add comment" }, { status: 500 });
+        return apiErrorResponse("/api/forums/[id]/comments POST", err, "Failed to add comment");
     }
 }

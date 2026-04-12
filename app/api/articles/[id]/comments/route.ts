@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getArticleCommentsByArticle, addArticleComment } from "../../../../../lib/db";
 import { verifyToken } from "../../../../../lib/auth";
+import { apiErrorResponse } from "../../../../../lib/apiErrors";
 
 export const runtime = "nodejs";
 
@@ -16,8 +17,7 @@ export async function GET(
     const comments = await getArticleCommentsByArticle(id);
     return NextResponse.json(comments);
   } catch (err) {
-    console.error("/api/articles/[id]/comments GET error:", err);
-    return NextResponse.json({ error: "Server error" }, { status: 500 });
+    return apiErrorResponse("/api/articles/[id]/comments GET", err, "Failed to load comments");
   }
 }
 
@@ -46,7 +46,6 @@ export async function POST(
     const comment = await addArticleComment(id, user.id, body);
     return NextResponse.json(comment, { status: 201 });
   } catch (err) {
-    console.error("/api/articles/[id]/comments POST error:", err);
-    return NextResponse.json({ error: "Failed to add comment" }, { status: 500 });
+    return apiErrorResponse("/api/articles/[id]/comments POST", err, "Failed to add comment");
   }
 }

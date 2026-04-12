@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { authenticateUser, generateToken } from "../../../lib/auth";
+import { apiErrorResponse } from "../../../lib/apiErrors";
 
 export async function POST(req: NextRequest) {
     try {
-        const body = await req.json();
+        const body = await req.json().catch(() => null);
+        if (!body || typeof body !== "object") {
+            return NextResponse.json({ error: "Invalid request body", cause: "Malformed JSON payload" }, { status: 400 });
+        }
         const { username, password } = body;
 
         if (!username || !password) {
@@ -30,7 +34,6 @@ export async function POST(req: NextRequest) {
 
         return res;
     } catch (err) {
-        console.error("/api/login error:", err);
-        return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+        return apiErrorResponse("/api/login", err, "Internal server error");
     }
 }

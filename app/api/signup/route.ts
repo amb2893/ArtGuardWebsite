@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createUser, generateToken, } from "../../../lib/auth";
 import { getPasswordIssues } from "../../../lib/passwordRules";
+import { apiErrorResponse } from "../../../lib/apiErrors";
 
 export async function POST(req: NextRequest) {
   try {
@@ -44,7 +45,6 @@ export async function POST(req: NextRequest) {
     if (err?.code === "USER_EXISTS" || err?.message === "USER_EXISTS") {
       return NextResponse.json({ error: "Username already taken" }, { status: 409 });
     }
-    console.error("/api/signup error:", err);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return apiErrorResponse("/api/signup", err, "Internal server error");
   }
 }

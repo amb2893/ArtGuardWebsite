@@ -113,6 +113,7 @@ CREATE TABLE ratings_reviews (
   website_id INTEGER NOT NULL REFERENCES websites(id) ON DELETE CASCADE,
   author_id INTEGER NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
   body TEXT NOT NULL,
+  tags TEXT[] NOT NULL DEFAULT '{}'::TEXT[],
   created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 

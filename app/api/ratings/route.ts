@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createOrUpdateRating } from "@/lib/db";
 import { verifyToken } from "@/lib/auth";
+import { apiErrorResponse } from "@/lib/apiErrors";
 
 export async function POST(req: NextRequest) {
     try {
@@ -27,7 +28,6 @@ export async function POST(req: NextRequest) {
         const ratingRecord = await createOrUpdateRating(websiteId, user.id, rating);
         return NextResponse.json(ratingRecord, { status: 201 });
     } catch (err) {
-        console.error("/app/api/ratings POST error:", err);
-        return NextResponse.json({ error: "Failed to submit rating" }, { status: 500 });
+        return apiErrorResponse("/api/ratings POST", err, "Failed to submit rating");
     }
 }

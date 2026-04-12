@@ -9,13 +9,30 @@ const pool = new Pool({
   connectionString,
 });
 
+let accountsRoleColumnsReady = false;
+
+async function ensureAccountsRoleColumns() {
+  if (accountsRoleColumnsReady) return;
+
+  await pool.query(
+    "ALTER TABLE accounts ADD COLUMN IF NOT EXISTS is_admin BOOLEAN NOT NULL DEFAULT FALSE"
+  );
+  await pool.query(
+    "ALTER TABLE accounts ADD COLUMN IF NOT EXISTS is_trusted BOOLEAN NOT NULL DEFAULT FALSE"
+  );
+
+  accountsRoleColumnsReady = true;
+}
+
 //Role check
 export async function isTrusted(userId: number): Promise<boolean> {
+  await ensureAccountsRoleColumns();
   const res = await pool.query("SELECT is_trusted FROM accounts WHERE id = $1", [userId]);
   return Boolean(res.rows[0]?.is_trusted);
 }
 
 export async function isAdmin(userId: number): Promise<boolean> {
+  await ensureAccountsRoleColumns();
   const res = await pool.query("SELECT is_admin FROM accounts WHERE id = $1", [userId]);
   return Boolean(res.rows[0]?.is_admin);
 }
@@ -58,11 +75,6 @@ export async function getFeaturedArticles() {
         ar.created_at,
         a.username AS author,
         COUNT(ac.id)::int AS comment_count
-      export interface RatingTimeSeriesPoint {
-        date: string;
-        positive_count: number;
-        negative_count: number;
-      }
       FROM articles ar
       JOIN accounts a ON a.id = ar.author_id
       LEFT JOIN article_comments ac ON ac.article_id = ar.id
@@ -553,9 +565,14 @@ async function ensureRatingsReviewsTable() {
       website_id INTEGER NOT NULL REFERENCES websites(id) ON DELETE CASCADE,
       author_id INTEGER NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
       body TEXT NOT NULL,
+      tags TEXT[] NOT NULL DEFAULT '{}'::TEXT[],
       created_at TIMESTAMP DEFAULT NOW()
     )
   `);
+
+  await pool.query(
+    "ALTER TABLE ratings_reviews ADD COLUMN IF NOT EXISTS tags TEXT[] NOT NULL DEFAULT '{}'::TEXT[]"
+  );
 
   await pool.query(
     "CREATE INDEX IF NOT EXISTS ratings_reviews_website_idx ON ratings_reviews(website_id, created_at ASC)"
@@ -568,7 +585,7 @@ export async function getRatingReviewsByWebsite(websiteId: number) {
   await ensureRatingsReviewsTable();
 
     const res = await pool.query(
-        `SELECT rr.id, rr.website_id, rr.author_id, a.username, rr.body, rr.created_at
+        `SELECT rr.id, rr.website_id, rr.author_id, a.username, rr.body, rr.tags, rr.created_at
          FROM ratings_reviews rr
          JOIN accounts a ON rr.author_id = a.id
          WHERE rr.website_id = $1
@@ -578,12 +595,12 @@ export async function getRatingReviewsByWebsite(websiteId: number) {
     return res.rows;
 }
 
-export async function addRatingReview(websiteId: number, authorId: number, body: string) {
+export async function addRatingReview(websiteId: number, authorId: number, body: string, tags: string[]) {
   await ensureRatingsReviewsTable();
 
     const res = await pool.query(
-        "INSERT INTO ratings_reviews (website_id, author_id, body) VALUES ($1, $2, $3) RETURNING id, website_id, author_id, body, created_at",
-        [websiteId, authorId, body]
+        "INSERT INTO ratings_reviews (website_id, author_id, body, tags) VALUES ($1, $2, $3, $4) RETURNING id, website_id, author_id, body, tags, created_at",
+        [websiteId, authorId, body, tags]
     );
 
     // Attach username
@@ -591,6 +608,43 @@ export async function addRatingReview(websiteId: number, authorId: number, body:
     const userRes = await pool.query("SELECT username FROM accounts WHERE id = $1", [authorId]);
     review.username = userRes.rows[0]?.username ?? null;
     return review;
+}
+
+export async function updateRatingReview(
+  reviewId: number,
+  websiteId: number,
+  authorId: number,
+  body: string,
+  tags: string[]
+) {
+  await ensureRatingsReviewsTable();
+
+  const res = await pool.query(
+    `UPDATE ratings_reviews
+     SET body = $1,
+         tags = $2
+     WHERE id = $3 AND website_id = $4 AND author_id = $5
+     RETURNING id, website_id, author_id, body, tags, created_at`,
+    [body, tags, reviewId, websiteId, authorId]
+  );
+
+  if (!res.rows[0]) return null;
+
+  const review = res.rows[0];
+  const userRes = await pool.query("SELECT username FROM accounts WHERE id = $1", [authorId]);
+  review.username = userRes.rows[0]?.username ?? null;
+  return review;
+}
+
+export async function deleteRatingReview(reviewId: number, websiteId: number, authorId: number) {
+  await ensureRatingsReviewsTable();
+
+  const res = await pool.query(
+    "DELETE FROM ratings_reviews WHERE id = $1 AND website_id = $2 AND author_id = $3 RETURNING id",
+    [reviewId, websiteId, authorId]
+  );
+
+  return Boolean(res.rows[0]);
 }
 
 export { pool };

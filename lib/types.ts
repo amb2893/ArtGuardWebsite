@@ -54,6 +54,7 @@ export interface RatingReview {
     author_id: number;
     username?: string | null;
     body: string;
+    tags: string[];
     created_at: string;
 }
 export interface RatingTimeSeriesPoint {
