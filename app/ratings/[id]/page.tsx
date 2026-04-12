@@ -23,11 +23,13 @@ export default async function WebsitePage({
         const cookieStore = await cookies();
         const token = cookieStore.get("token")?.value;
         let userRating = null;
+        let currentUserId: number | null = null;
         
         if (token) {
             try {
                 const user = verifyToken(token);
                 if (user) {
+                    currentUserId = user.id;
                     userRating = await getUserRating(websiteId, user.id);
                 }
             } catch (err) {
@@ -42,6 +44,7 @@ export default async function WebsitePage({
                     website={website} 
                     ratingsData={ratingsData}
                     userRating={userRating?.rating || null}
+                    currentUserId={currentUserId}
                 />
             </div>
         );

@@ -15,9 +15,10 @@ interface Props {
         total_ratings: string;
     };
     userRating: number | null; // 1 for positive, -1 for negative, null for no rating
+    currentUserId: number | null;
 }
 
-export default function WebsitePageClient({ website, ratingsData, userRating: initialUserRating }: Props) {
+export default function WebsitePageClient({ website, ratingsData, userRating: initialUserRating, currentUserId }: Props) {
     const router = useRouter();
     const [isRating, setIsRating] = useState(false);
     const [userRating, setUserRating] = useState<number | null>(initialUserRating);
@@ -187,7 +188,7 @@ export default function WebsitePageClient({ website, ratingsData, userRating: in
                     </div>
 
                     <div className="website-rate-card rating-reviews-container">
-                        <RatingReviewsSection websiteId={website.id} />
+                        <RatingReviewsSection websiteId={website.id} currentUserId={currentUserId} />
                     </div>
 
                     <div className="back-link-container">

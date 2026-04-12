@@ -1389,6 +1389,11 @@ form button {
     width: 100%;
 }
 
+.rating-review-input-wrap {
+    position: relative;
+    width: 100%;
+}
+
 .rating-review-textarea {
     width: 100%;
     max-width: 100%;
@@ -1404,6 +1409,8 @@ form button {
     transition: border-color var(--transition-fast), background-color var(--transition-fast);
     line-height: var(--line-height-body);
     font-weight: var(--font-weight-regular);
+    min-height: 110px;
+    padding-bottom: 3.25rem;
 }
 
 .rating-review-textarea:focus {
@@ -1414,19 +1421,77 @@ form button {
 }
 
 .rating-review-submit {
-    align-self: flex-start;
-    background: var(--color-warning);
+    position: absolute;
+    right: 0.75rem;
+    bottom: 0.75rem;
+    margin: 0;
+    background: var(--color-primary);
     color: var(--color-white);
     border: none;
     border-radius: var(--radius-lg);
-    padding: 0.7rem 1.5rem;
+    padding: 0.6rem 1.15rem;
     font-weight: var(--font-weight-bold);
-    transition: background-color var(--transition-fast), transform var(--transition-fast);
+    box-shadow: var(--shadow-xl);
+    transition: transform var(--transition-fast), box-shadow var(--transition-fast), background-color var(--transition-fast);
 }
 
 .rating-review-submit:hover {
-    background: #d97706;
-    transform: translateY(-1px);
+    background: var(--color-primary-light);
+    transform: translateY(-2px);
+    box-shadow: 0 16px 28px rgba(255, 45, 85, 0.28);
+}
+
+.rating-review-tags-picker {
+    width: 100%;
+    border: 1px solid var(--color-border-light);
+    border-radius: var(--radius-lg);
+    background: #fbfcff;
+    padding: var(--spacing-md);
+}
+
+.rating-review-tags-summary {
+    cursor: pointer;
+    font-weight: var(--font-weight-bold);
+    color: var(--color-text-secondary);
+}
+
+.rating-review-tags-grid {
+    margin-top: var(--spacing-md);
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 0.5rem;
+}
+
+.rating-tag-option {
+    display: grid;
+    grid-template-columns: 16px 1fr;
+    column-gap: 0.5rem;
+    align-items: start;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    padding: 0.45rem 0.6rem;
+    background: var(--color-white);
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
+    cursor: pointer;
+}
+
+.rating-tag-option-active {
+    border-color: #fb7185;
+    background: #fff1f4;
+    color: var(--color-text);
+}
+
+.rating-tag-option input {
+    margin: 0;
+    width: 16px;
+    height: 16px;
+    accent-color: var(--color-primary);
+    transform: translateY(1px);
+}
+
+.rating-tag-option span {
+    line-height: 1.35;
 }
 
 .rating-review-error,
@@ -1468,6 +1533,58 @@ form button {
 .rating-review-body {
     color: var(--color-text);
     white-space: pre-wrap;
+}
+
+.rating-review-tag-list {
+    margin-top: var(--spacing-sm);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+}
+
+.rating-review-tag-chip {
+    background: #ecf6ff;
+    border: 1px solid #cde4ff;
+    color: #11477d;
+    border-radius: var(--radius-full);
+    padding: 0.2rem 0.65rem;
+    font-size: 0.78rem;
+    font-weight: var(--font-weight-medium);
+}
+
+.rating-review-actions {
+    margin-top: var(--spacing-md);
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.rating-review-action-btn {
+    margin-top: 0;
+    padding: 0.45rem 0.85rem;
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-bold);
+    background: var(--color-primary);
+    color: var(--color-white);
+}
+
+.rating-review-action-btn-secondary {
+    background: var(--color-white);
+    color: var(--color-text);
+    border: 1px solid var(--color-border);
+}
+
+.rating-review-action-btn-secondary:hover {
+    background: #f3f4f6;
+}
+
+.rating-review-action-btn-danger {
+    background: #b4232e;
+}
+
+.rating-review-action-btn-danger:hover {
+    background: #9a1d27;
 }
 
 /* Back Link */
