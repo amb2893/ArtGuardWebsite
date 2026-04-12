@@ -56,3 +56,8 @@ export interface RatingReview {
     body: string;
     created_at: string;
 }
+export interface RatingTimeSeriesPoint {
+    date: string;
+    positive_count: number;
+    negative_count: number;
+}
