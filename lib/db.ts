@@ -58,11 +58,6 @@ export async function getFeaturedArticles() {
         ar.created_at,
         a.username AS author,
         COUNT(ac.id)::int AS comment_count
-      export interface RatingTimeSeriesPoint {
-        date: string;
-        positive_count: number;
-        negative_count: number;
-      }
       FROM articles ar
       JOIN accounts a ON a.id = ar.author_id
       LEFT JOIN article_comments ac ON ac.article_id = ar.id
@@ -401,7 +396,13 @@ export async function getWebsites(): Promise<Website[]> {
         SELECT 
             w.id, 
             w.website_name, 
-            COALESCE(COUNT(r.id), 0)::INTEGER as report_count
+      COALESCE(COUNT(r.id), 0)::INTEGER as report_count,
+      COALESCE(
+        ROUND(
+          (COUNT(CASE WHEN r.rating = 1 THEN 1 END)::numeric / NULLIF(COUNT(r.id), 0)::numeric) * 100
+        ),
+        0
+      )::INTEGER as approval_percentage
         FROM websites w
         LEFT JOIN ratings r ON w.id = r.website_id
         GROUP BY w.id, w.website_name
@@ -416,7 +417,13 @@ export async function getWebsite(websiteId: number) {
         `SELECT 
             w.id, 
             w.website_name, 
-            COALESCE(COUNT(r.id), 0)::INTEGER as report_count
+      COALESCE(COUNT(r.id), 0)::INTEGER as report_count,
+      COALESCE(
+        ROUND(
+          (COUNT(CASE WHEN r.rating = 1 THEN 1 END)::numeric / NULLIF(COUNT(r.id), 0)::numeric) * 100
+        ),
+        0
+      )::INTEGER as approval_percentage
         FROM websites w
         LEFT JOIN ratings r ON w.id = r.website_id
         WHERE w.id = $1
@@ -464,11 +471,37 @@ export async function createOrUpdateRating(websiteId: number, userId: number, ra
 
 export async function getRatingTimeSeries(websiteId: number, granularity: string) {
   const intervalMap: Record<string, string> = {
-    daily: "day",
-    weekly: "week",
     monthly: "month",
+    yearly: "year",
   };
-  const interval = intervalMap[granularity] || "day";
+
+  if (granularity === "all-time") {
+    const allTimeRes = await pool.query(
+      `SELECT
+          MIN(created_at) AS date,
+          COUNT(CASE WHEN rating = 1 THEN 1 END)::int AS positive_count,
+          COUNT(CASE WHEN rating = -1 THEN 1 END)::int AS negative_count,
+          COUNT(*)::int AS total_count
+        FROM ratings
+        WHERE website_id = $1`,
+      [websiteId]
+    );
+
+    const row = allTimeRes.rows[0];
+    if (!row || row.total_count === 0) {
+      return [];
+    }
+
+    return [
+      {
+        date: row.date,
+        positive_count: row.positive_count,
+        negative_count: row.negative_count,
+      },
+    ];
+  }
+
+  const interval = intervalMap[granularity] || "month";
 
   const res = await pool.query(
     `SELECT
@@ -495,6 +528,12 @@ export async function getRecentlyRatedWebsites(): Promise<Website[]> {
             w.id, 
             w.website_name, 
             COALESCE(COUNT(r.id), 0)::INTEGER as report_count,
+      COALESCE(
+        ROUND(
+          (COUNT(CASE WHEN r.rating = 1 THEN 1 END)::numeric / NULLIF(COUNT(r.id), 0)::numeric) * 100
+        ),
+        0
+      )::INTEGER as approval_percentage,
             MAX(r.created_at) as last_rated
         FROM websites w
         INNER JOIN ratings r ON w.id = r.website_id
@@ -511,7 +550,13 @@ export async function getTopRatedWebsites(): Promise<Website[]> {
         SELECT 
             w.id, 
             w.website_name, 
-            COUNT(r.id)::INTEGER as report_count
+      COUNT(r.id)::INTEGER as report_count,
+      COALESCE(
+        ROUND(
+          (COUNT(CASE WHEN r.rating = 1 THEN 1 END)::numeric / NULLIF(COUNT(r.id), 0)::numeric) * 100
+        ),
+        0
+      )::INTEGER as approval_percentage
         FROM websites w
         INNER JOIN ratings r ON w.id = r.website_id
         GROUP BY w.id, w.website_name

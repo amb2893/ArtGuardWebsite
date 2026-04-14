@@ -57,6 +57,9 @@ export default function SearchRatings({ websites, recentlyRated, topRated }: Sea
                                     <div className="recently-rated-card-count">
                                         {website.report_count} {website.report_count === 1 ? 'rating' : 'ratings'}
                                     </div>
+                                    <div className="recently-rated-card-count">
+                                        Approval: {website.approval_percentage ?? 0}%
+                                    </div>
                                 </div>
                             </Link>
                         ))}
@@ -80,6 +83,9 @@ export default function SearchRatings({ websites, recentlyRated, topRated }: Sea
                                     </h3>
                                     <div className="recently-rated-card-count">
                                         {website.report_count} {website.report_count === 1 ? 'rating' : 'ratings'}
+                                    </div>
+                                    <div className="recently-rated-card-count">
+                                        Approval: {website.approval_percentage ?? 0}%
                                     </div>
                                 </div>
                             </Link>

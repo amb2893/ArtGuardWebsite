@@ -18,9 +18,9 @@ export async function GET(
         const granularity = url.searchParams.get("granularity") || "monthly";
 
         // Only allow valid granularity values
-        if (!["daily", "weekly", "monthly"].includes(granularity)) {
+        if (!["monthly", "yearly", "all-time"].includes(granularity)) {
             return NextResponse.json(
-                { error: "Invalid granularity. Use: daily, weekly, or monthly" },
+                { error: "Invalid granularity. Use: monthly, yearly, or all-time" },
                 { status: 400 }
             );
         }

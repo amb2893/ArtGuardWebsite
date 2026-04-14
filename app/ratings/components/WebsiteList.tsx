@@ -27,6 +27,9 @@ export default function WebsiteList({ websites }: Props) {
                             <div className="search-result-card-count">
                                 {website.report_count} {website.report_count === 1 ? 'rating' : 'ratings'}
                             </div>
+                            <div className="search-result-card-count">
+                                Approval: {website.approval_percentage ?? 0}%
+                            </div>
                         </div>
                     </Link>
                 ))}

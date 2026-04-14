@@ -3,6 +3,7 @@ export interface Website {
     id: number;
     website_name: string;
     report_count: number;
+    approval_percentage?: number;
 }
 
 export interface Article {

@@ -7,12 +7,13 @@ import {
     LinearScale,
     PointElement,
     LineElement,
+    BarElement,
     Title,
     Tooltip,
     Legend,
     Filler,
 } from "chart.js";
-import { Line } from "react-chartjs-2";
+import { Line, Bar } from "react-chartjs-2";
 import { RatingTimeSeriesPoint } from "../../../lib/types";
 
 // Register Chart.js components (required by Chart.js v4+)
@@ -21,6 +22,7 @@ ChartJS.register(
     LinearScale,
     PointElement,
     LineElement,
+    BarElement,
     Title,
     Tooltip,
     Legend,
@@ -31,11 +33,13 @@ interface Props {
     websiteId: number;
 }
 
-type Granularity = "daily" | "weekly" | "monthly";
+type Granularity = "monthly" | "yearly" | "all-time";
+type ChartType = "line" | "bar";
 
 export default function RatingsChart({ websiteId }: Props) {
     const [data, setData] = useState<RatingTimeSeriesPoint[]>([]);
     const [granularity, setGranularity] = useState<Granularity>("monthly");
+    const [chartType, setChartType] = useState<ChartType>("line");
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -60,14 +64,16 @@ export default function RatingsChart({ websiteId }: Props) {
 
     // Format dates for the X-axis labels
     const labels = data.map((point) => {
+        if (granularity === "all-time") {
+            return "All Time";
+        }
+
         const d = new Date(point.date);
-        if (granularity === "daily") {
-            return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-        } else if (granularity === "weekly") {
-            return "Week of " + d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-        } else {
+        if (granularity === "monthly") {
             return d.toLocaleDateString("en-US", { month: "short", year: "numeric" });
         }
+
+        return d.toLocaleDateString("en-US", { year: "numeric" });
     });
 
     // Build cumulative totals so the line shows running totals over time
@@ -89,8 +95,8 @@ export default function RatingsChart({ websiteId }: Props) {
                 label: "Positive Ratings",
                 data: positiveValues,
                 borderColor: "#22c55e",
-                backgroundColor: "rgba(34, 197, 94, 0.1)",
-                fill: true,
+                backgroundColor: "rgba(34, 197, 94, 0.45)",
+                fill: chartType === "line",
                 tension: 0.3,
                 pointRadius: 4,
                 pointHoverRadius: 6,
@@ -99,8 +105,8 @@ export default function RatingsChart({ websiteId }: Props) {
                 label: "Negative Ratings",
                 data: negativeValues,
                 borderColor: "#ef4444",
-                backgroundColor: "rgba(239, 68, 68, 0.1)",
-                fill: true,
+                backgroundColor: "rgba(239, 68, 68, 0.45)",
+                fill: chartType === "line",
                 tension: 0.3,
                 pointRadius: 4,
                 pointHoverRadius: 6,
@@ -156,16 +162,30 @@ export default function RatingsChart({ websiteId }: Props) {
         <div className="ratings-chart-card">
             <div className="ratings-chart-header">
                 <h2 className="website-card-title">Rating Trends</h2>
-                <div className="ratings-chart-toggle">
-                    {(["daily", "weekly", "monthly"] as Granularity[]).map((g) => (
-                        <button
-                            key={g}
-                            onClick={() => setGranularity(g)}
-                            className={`chart-toggle-btn ${granularity === g ? "chart-toggle-active" : ""}`}
-                        >
-                            {g.charAt(0).toUpperCase() + g.slice(1)}
-                        </button>
-                    ))}
+                <div>
+                    <div className="ratings-chart-toggle" style={{ marginBottom: "0.5rem" }}>
+                        {(["monthly", "yearly", "all-time"] as Granularity[]).map((g) => (
+                            <button
+                                key={g}
+                                onClick={() => setGranularity(g)}
+                                className={`chart-toggle-btn ${granularity === g ? "chart-toggle-active" : ""}`}
+                            >
+                                {g === "all-time" ? "All Time" : g.charAt(0).toUpperCase() + g.slice(1)}
+                            </button>
+                        ))}
+                    </div>
+
+                    <div className="ratings-chart-toggle">
+                        {(["line", "bar"] as ChartType[]).map((type) => (
+                            <button
+                                key={type}
+                                onClick={() => setChartType(type)}
+                                className={`chart-toggle-btn ${chartType === type ? "chart-toggle-active" : ""}`}
+                            >
+                                {type === "line" ? "Line" : "Bar"}
+                            </button>
+                        ))}
+                    </div>
                 </div>
             </div>
 
@@ -177,7 +197,11 @@ export default function RatingsChart({ websiteId }: Props) {
                 )}
                 {!loading && !error && data.length > 0 && (
                     <div className="ratings-chart-container">
-                        <Line data={chartData} options={chartOptions} />
+                        {chartType === "line" ? (
+                            <Line data={chartData} options={chartOptions} />
+                        ) : (
+                            <Bar data={chartData} options={chartOptions} />
+                        )}
                     </div>
                 )}
             </div>
