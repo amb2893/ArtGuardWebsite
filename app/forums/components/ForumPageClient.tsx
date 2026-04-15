@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { ForumPost, Comment } from "../../../lib/types";
 import CommentsList from "./CommentsList";
 import NewCommentForm from "./NewCommentForm";
@@ -12,9 +12,42 @@ interface Props {
 
 export default function ForumPageClient({ post, initialComments }: Props) {
     const [comments, setComments] = useState<Comment[]>(initialComments);
+    const [currentUserId, setCurrentUserId] = useState<number | null>(null);
+
+    useEffect(() => {
+        let cancelled = false;
+
+        async function loadCurrentUser() {
+            try {
+                const res = await fetch("/api/me", {
+                    credentials: "same-origin",
+                    cache: "no-store",
+                });
+                if (!res.ok || cancelled) return;
+
+                const me = (await res.json()) as { id?: number | null };
+                if (!cancelled) setCurrentUserId(typeof me.id === "number" ? me.id : null);
+            } catch {
+                if (!cancelled) setCurrentUserId(null);
+            }
+        }
+
+        loadCurrentUser();
+        return () => {
+            cancelled = true;
+        };
+    }, []);
 
     function handleNewComment(c: Comment) {
         setComments((prev) => [...prev, c]);
+    }
+
+    function handleUpdatedComment(updated: Comment) {
+        setComments((prev) => prev.map((comment) => (comment.id === updated.id ? updated : comment)));
+    }
+
+    function handleDeletedComment(commentId: number) {
+        setComments((prev) => prev.filter((comment) => comment.id !== commentId));
     }
 
     return (
@@ -39,7 +72,13 @@ export default function ForumPageClient({ post, initialComments }: Props) {
             </section>
 
             <section className="forum-comments-list">
-                <CommentsList comments={comments} />
+                <CommentsList
+                    comments={comments}
+                    postId={post.id}
+                    currentUserId={currentUserId}
+                    onUpdated={handleUpdatedComment}
+                    onDeleted={handleDeletedComment}
+                />
             </section>
         </div>
     );

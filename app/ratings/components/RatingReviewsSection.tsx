@@ -13,6 +13,7 @@ export default function RatingReviewsSection({ websiteId }: Props) {
     const [reviews, setReviews] = useState<RatingReview[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [currentUserId, setCurrentUserId] = useState<number | null>(null);
 
     useEffect(() => {
         let cancelled = false;
@@ -21,13 +22,23 @@ export default function RatingReviewsSection({ websiteId }: Props) {
             setLoading(true);
             setError(null);
             try {
-                const res = await fetch(`/api/ratings/${websiteId}/reviews`, { credentials: "same-origin" });
-                if (!res.ok) {
+                const [reviewsRes, meRes] = await Promise.all([
+                    fetch(`/api/ratings/${websiteId}/reviews`, { credentials: "same-origin" }),
+                    fetch("/api/me", { credentials: "same-origin", cache: "no-store" }),
+                ]);
+
+                if (!reviewsRes.ok) {
                     setError("Failed to load reviews.");
                     return;
                 }
-                const data: RatingReview[] = await res.json();
+
+                const data: RatingReview[] = await reviewsRes.json();
                 if (!cancelled) setReviews(data);
+
+                if (meRes.ok && !cancelled) {
+                    const me = (await meRes.json()) as { id?: number | null };
+                    setCurrentUserId(typeof me.id === "number" ? me.id : null);
+                }
             } catch (err) {
                 if (!cancelled) setError("Network error.");
             } finally {
@@ -45,6 +56,14 @@ export default function RatingReviewsSection({ websiteId }: Props) {
         setReviews((prev) => [...prev, r]);
     }
 
+    function handleUpdatedReview(updated: RatingReview) {
+        setReviews((prev) => prev.map((review) => (review.id === updated.id ? updated : review)));
+    }
+
+    function handleDeletedReview(reviewId: number) {
+        setReviews((prev) => prev.filter((review) => review.id !== reviewId));
+    }
+
     return (
         <div className="rating-reviews">
             <div className="rating-reviews-header">
@@ -56,7 +75,15 @@ export default function RatingReviewsSection({ websiteId }: Props) {
             <div className="rating-reviews-body">
                 {loading && <div className="rating-reviews-muted">Loading reviews...</div>}
                 {error && <div className="rating-reviews-error">{error}</div>}
-                {!loading && !error && <RatingReviewsList reviews={reviews} />}
+                {!loading && !error && (
+                    <RatingReviewsList
+                        reviews={reviews}
+                        websiteId={websiteId}
+                        currentUserId={currentUserId}
+                        onUpdated={handleUpdatedReview}
+                        onDeleted={handleDeletedReview}
+                    />
+                )}
             </div>
         </div>
     );

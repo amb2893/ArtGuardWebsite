@@ -303,6 +303,40 @@ export async function addArticleComment(articleId: number, authorId: number, bod
     return comment;
 }
 
+export async function updateArticleCommentByAuthor(
+  commentId: number,
+  articleId: number,
+  authorId: number,
+  body: string
+) {
+  const res = await pool.query(
+    `UPDATE article_comments ac
+     SET body = $1
+     FROM accounts a
+     WHERE ac.id = $2
+       AND ac.article_id = $3
+       AND ac.author_id = $4
+       AND a.id = ac.author_id
+     RETURNING ac.id, ac.article_id, ac.author_id, a.username, ac.body, ac.created_at`,
+    [body, commentId, articleId, authorId]
+  );
+  return res.rows[0] ?? null;
+}
+
+export async function deleteArticleCommentByAuthor(
+  commentId: number,
+  articleId: number,
+  authorId: number
+) {
+  const res = await pool.query(
+    `DELETE FROM article_comments
+     WHERE id = $1 AND article_id = $2 AND author_id = $3
+     RETURNING id`,
+    [commentId, articleId, authorId]
+  );
+  return Boolean(res.rows[0]);
+}
+
 // Forums
 export async function getForumPosts() {
     const res = await pool.query(
@@ -389,6 +423,31 @@ export async function addComment(postId: number, authorId: number, body: string)
     const userRes = await pool.query("SELECT username FROM accounts WHERE id = $1", [authorId]);
     comment.username = userRes.rows[0]?.username ?? null;
     return comment;
+}
+
+export async function updateCommentByAuthor(commentId: number, postId: number, authorId: number, body: string) {
+  const res = await pool.query(
+    `UPDATE comments c
+     SET body = $1
+     FROM accounts a
+     WHERE c.id = $2
+       AND c.post_id = $3
+       AND c.author_id = $4
+       AND a.id = c.author_id
+     RETURNING c.id, c.post_id, c.author_id, a.username, c.body, c.created_at`,
+    [body, commentId, postId, authorId]
+  );
+  return res.rows[0] ?? null;
+}
+
+export async function deleteCommentByAuthor(commentId: number, postId: number, authorId: number) {
+  const res = await pool.query(
+    `DELETE FROM comments
+     WHERE id = $1 AND post_id = $2 AND author_id = $3
+     RETURNING id`,
+    [commentId, postId, authorId]
+  );
+  return Boolean(res.rows[0]);
 }
 
 export async function getWebsites(): Promise<Website[]> {
@@ -636,6 +695,40 @@ export async function addRatingReview(websiteId: number, authorId: number, body:
     const userRes = await pool.query("SELECT username FROM accounts WHERE id = $1", [authorId]);
     review.username = userRes.rows[0]?.username ?? null;
     return review;
+}
+
+export async function updateRatingReviewByAuthor(
+  reviewId: number,
+  websiteId: number,
+  authorId: number,
+  body: string
+) {
+  await ensureRatingsReviewsTable();
+
+  const res = await pool.query(
+    `UPDATE ratings_reviews rr
+     SET body = $1
+     FROM accounts a
+     WHERE rr.id = $2
+       AND rr.website_id = $3
+       AND rr.author_id = $4
+       AND a.id = rr.author_id
+     RETURNING rr.id, rr.website_id, rr.author_id, a.username, rr.body, rr.created_at`,
+    [body, reviewId, websiteId, authorId]
+  );
+  return res.rows[0] ?? null;
+}
+
+export async function deleteRatingReviewByAuthor(reviewId: number, websiteId: number, authorId: number) {
+  await ensureRatingsReviewsTable();
+
+  const res = await pool.query(
+    `DELETE FROM ratings_reviews
+     WHERE id = $1 AND website_id = $2 AND author_id = $3
+     RETURNING id`,
+    [reviewId, websiteId, authorId]
+  );
+  return Boolean(res.rows[0]);
 }
 
 export { pool };

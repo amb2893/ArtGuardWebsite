@@ -33,7 +33,12 @@ CREATE TABLE accounts (
 INSERT INTO accounts (username, password_hash, is_admin, is_trusted)
 VALUES
     ('admin', '$2b$10$mUo5MN1YQox3PMU/7FGmR.iwSNU0D44WcAFgkmrTNlce.9gT4htUK', TRUE, TRUE),
-    ('testuser', 'password', FALSE, TRUE);
+  ('testuser', 'password', FALSE, TRUE),
+  ('trend_alpha', '$2b$10$mUo5MN1YQox3PMU/7FGmR.iwSNU0D44WcAFgkmrTNlce.9gT4htUK', FALSE, FALSE),
+  ('trend_beta', '$2b$10$mUo5MN1YQox3PMU/7FGmR.iwSNU0D44WcAFgkmrTNlce.9gT4htUK', FALSE, FALSE),
+  ('trend_gamma', '$2b$10$mUo5MN1YQox3PMU/7FGmR.iwSNU0D44WcAFgkmrTNlce.9gT4htUK', FALSE, FALSE),
+  ('trend_delta', '$2b$10$mUo5MN1YQox3PMU/7FGmR.iwSNU0D44WcAFgkmrTNlce.9gT4htUK', FALSE, FALSE),
+  ('trend_epsilon', '$2b$10$mUo5MN1YQox3PMU/7FGmR.iwSNU0D44WcAFgkmrTNlce.9gT4htUK', FALSE, FALSE);
 
 -- ============================
 -- WEBSITES TABLE
@@ -139,6 +144,24 @@ SELECT w.id, a.id,
 FROM websites w
 JOIN accounts a ON a.username = 'testuser'
 ON CONFLICT DO NOTHING;
+
+-- Extra backdated ratings so the per-website trend charts show month-by-month movement.
+INSERT INTO ratings (website_id, user_id, rating, created_at)
+VALUES
+  ((SELECT id FROM websites WHERE website_name = 'example.com'), (SELECT id FROM accounts WHERE username = 'trend_alpha'), 1, NOW() - INTERVAL '5 months'),
+  ((SELECT id FROM websites WHERE website_name = 'example.com'), (SELECT id FROM accounts WHERE username = 'trend_beta'), 1, NOW() - INTERVAL '4 months'),
+  ((SELECT id FROM websites WHERE website_name = 'example.com'), (SELECT id FROM accounts WHERE username = 'trend_gamma'), -1, NOW() - INTERVAL '3 months'),
+  ((SELECT id FROM websites WHERE website_name = 'example.com'), (SELECT id FROM accounts WHERE username = 'trend_delta'), 1, NOW() - INTERVAL '2 months'),
+  ((SELECT id FROM websites WHERE website_name = 'example.com'), (SELECT id FROM accounts WHERE username = 'trend_epsilon'), 1, NOW() - INTERVAL '1 month'),
+  ((SELECT id FROM websites WHERE website_name = 'artstealer.net'), (SELECT id FROM accounts WHERE username = 'trend_alpha'), -1, NOW() - INTERVAL '5 months'),
+  ((SELECT id FROM websites WHERE website_name = 'artstealer.net'), (SELECT id FROM accounts WHERE username = 'trend_beta'), -1, NOW() - INTERVAL '4 months'),
+  ((SELECT id FROM websites WHERE website_name = 'artstealer.net'), (SELECT id FROM accounts WHERE username = 'trend_gamma'), -1, NOW() - INTERVAL '3 months'),
+  ((SELECT id FROM websites WHERE website_name = 'artstealer.net'), (SELECT id FROM accounts WHERE username = 'trend_delta'), 1, NOW() - INTERVAL '2 months'),
+  ((SELECT id FROM websites WHERE website_name = 'artstealer.net'), (SELECT id FROM accounts WHERE username = 'trend_epsilon'), -1, NOW() - INTERVAL '1 month'),
+  ((SELECT id FROM websites WHERE website_name = 'openportfolio.org'), (SELECT id FROM accounts WHERE username = 'trend_alpha'), 1, NOW() - INTERVAL '4 months'),
+  ((SELECT id FROM websites WHERE website_name = 'openportfolio.org'), (SELECT id FROM accounts WHERE username = 'trend_beta'), 1, NOW() - INTERVAL '2 months'),
+  ((SELECT id FROM websites WHERE website_name = 'openportfolio.org'), (SELECT id FROM accounts WHERE username = 'trend_gamma'), 1, NOW() - INTERVAL '15 days')
+ON CONFLICT (website_id, user_id) DO NOTHING;
 
 -- ============================
 -- ARTICLES TABLE (with moderation)
