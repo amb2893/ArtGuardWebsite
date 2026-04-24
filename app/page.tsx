@@ -16,47 +16,48 @@ export default function HomePage() {
                         DEFEND YOUR <span className="accent">CREATIVE</span> WORK
                     </h1>
                     <p className="homepage-desc">
-                        ArtGuard protects artists from unauthorized AI training.<br />
-                        Expose scrapers, educate creators, and defend your rights in an evolving digital landscape.
+                        ArtGuard empowers artists to protect their art from unauthorized AI training and feel at ease.
+                        Join our growing community to learn how to protect yourself, discuss a range of of topics related to art and AI, and
+                        review hosting sites based on your own experiences.
                     </p>
                     <div className="homepage-buttons">
-                        <button className="btn-primary">START PROTECTING NOW →</button>
-                        <button className="btn-secondary">▶ WATCH DEMO</button>
+                        <button className="btn-primary">VISIT OUR FORUMS NOW</button>
+                        <button className="btn-secondary">LEAVE A REVIEW</button>
                     </div>
                 </div>
                 <div className="homepage-right">
                     <div className="protection-card">
                         <div className="protection-header">
-                            <h2>PROTECTION ACTIVE</h2>
+                            <h2>WHAT ARTGUARD DOES FOR YOU</h2>
                             <span className="live-badge">LIVE</span>
                         </div>
                         <div className="protection-content">
                             <div className="protection-item">
-                                <div className="protection-icon">🛡️</div>
+                                <div className="protection-icon">📈</div>
                                 <div className="protection-text">
-                                    <p className="protection-number">1,247 Artworks Protected</p>
-                                    <p className="protection-subtext">Last scan: 2 minutes ago</p>
+                                    <p className="protection-number">Website Reviews</p>
+                                    <p className="protection-subtext">See how sites protect your art</p>
                                 </div>
-                                <div className="checkmark">✓</div>
+                                <div className="arrow">›</div>
                             </div>
                             <div className="protection-item threat">
                                 <div className="threat-icon">🔔</div>
                                 <div className="protection-text">
-                                    <p className="protection-number">3 New Threats Blocked</p>
-                                    <p className="protection-subtext">Today at 2:34 PM</p>
+                                    <p className="protection-number">Join the Community</p>
+                                    <p className="protection-subtext">Join discussions and share feedback</p>
                                 </div>
-                                <div className="threat-badge">3</div>
+                                <div className="arrow">›</div>
                             </div>
                             <div className="protection-item community">
-                                <div className="community-icon">📈</div>
+                                <div className="community-icon">📚</div>
                                 <div className="protection-text">
-                                    <p className="protection-number">Community Growing</p>
-                                    <p className="protection-subtext">+2,341 artists this week</p>
+                                    <p className="protection-number">Inform Yourself</p>
+                                    <p className="protection-subtext">Read articles written by experts and trusted users</p>
                                 </div>
                                 <div className="arrow">›</div>
                             </div>
                         </div>
-                        <button className="btn-dashboard">👁 VIEW DASHBOARD</button>
+                        <button className="btn-dashboard">CREATE AN ACCOUNT NOW</button>
                     </div>
                 </div>
             </div>
@@ -64,28 +65,19 @@ export default function HomePage() {
             <div className="stats-section">
                 <div className="stats-container">
                     <div className="stat-item">
-                        <div className="stat-number">50K+</div>
-                        <div className="stat-label">PROTECTED ARTISTS</div>
+                        <div className="stat-number">EDUCATE</div>
                     </div>
                     <div className="stat-item">
-                        <div className="stat-number accent-pink">2.4M</div>
-                        <div className="stat-label">ARTWORKS MONITORED</div>
+                        <div className="stat-number accent-pink">INFORM</div>
                     </div>
                     <div className="stat-item">
-                        <div className="stat-number accent-yellow">99.7%</div>
-                        <div className="stat-label">DETECTION RATE</div>
+                        <div className="stat-number accent-yellow">ENABLE</div>
                     </div>
                     <div className="stat-item">
-                        <div className="stat-number">24/7</div>
-                        <div className="stat-label">ACTIVE PROTECTION</div>
+                        <div className="stat-number">EMPOWER</div>
                     </div>
                 </div>
             </div>
-
-            <section className="tools-section">
-                <h2 className="tools-heading">POWERFUL PROTECTION TOOLS</h2>
-                <p className="tools-subheading">Everything you need to defend your creative work from unauthorized AI training and web scraping</p>
-            </section>
 
             <div className="popular-content-section">
                 <PopularThreads />
