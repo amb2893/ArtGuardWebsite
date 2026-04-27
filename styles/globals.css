@@ -609,6 +609,50 @@ form button {
     font-weight: var(--font-weight-regular);
 }
 
+.article-comment-actions {
+    display: flex;
+    gap: var(--spacing-sm);
+    margin-top: var(--spacing-sm);
+}
+
+.article-comment-action-btn,
+.article-comment-action-btn-secondary,
+.article-comment-action-btn-danger {
+    border: none;
+    border-radius: var(--radius-md);
+    padding: 0.45rem 0.8rem;
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-bold);
+    transition: background-color var(--transition-fast), color var(--transition-fast);
+}
+
+.article-comment-action-btn {
+    background: var(--color-dark);
+    color: var(--color-white);
+}
+
+.article-comment-action-btn:hover {
+    background: var(--color-dark-secondary);
+}
+
+.article-comment-action-btn-secondary {
+    background: #e8edf5;
+    color: var(--color-text);
+}
+
+.article-comment-action-btn-secondary:hover {
+    background: #dfe5ef;
+}
+
+.article-comment-action-btn-danger {
+    background: #ffe7ea;
+    color: #b4232e;
+}
+
+.article-comment-action-btn-danger:hover {
+    background: #ffd4da;
+}
+
 .article-comments-muted {
     color: var(--color-text-muted);
     font-size: var(--font-size-sm);
@@ -1645,6 +1689,7 @@ form button {
 .ratings-chart-toggle {
     display: flex;
     gap: 0.5rem;
+    flex-wrap: wrap;
 }
 
 .chart-toggle-btn {
@@ -2655,6 +2700,50 @@ form button {
 
 .forum-comment-body {
     color: #1f2a44;
+}
+
+.forum-comment-actions {
+    display: flex;
+    gap: 0.6rem;
+    margin-top: 0.7rem;
+}
+
+.forum-comment-action-btn,
+.forum-comment-action-btn-secondary,
+.forum-comment-action-btn-danger {
+    border: none;
+    border-radius: 10px;
+    padding: 0.45rem 0.8rem;
+    font-size: 0.85rem;
+    font-weight: 700;
+    transition: background-color 0.2s ease;
+}
+
+.forum-comment-action-btn {
+    background: #0f1a2b;
+    color: #fff;
+}
+
+.forum-comment-action-btn:hover {
+    background: #18243a;
+}
+
+.forum-comment-action-btn-secondary {
+    background: #e7ecf5;
+    color: #1f2a44;
+}
+
+.forum-comment-action-btn-secondary:hover {
+    background: #dbe2ee;
+}
+
+.forum-comment-action-btn-danger {
+    background: #ffe7ea;
+    color: #b4232e;
+}
+
+.forum-comment-action-btn-danger:hover {
+    background: #ffd6dd;
 }
 
 @media (max-width: 720px) {
