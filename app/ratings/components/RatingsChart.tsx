@@ -32,10 +32,67 @@ interface Props {
 }
 
 type Granularity = "daily" | "weekly" | "monthly";
+type ExtendedGranularity = Granularity | "yearly" | "all";
+
+type FillStep = "month";
+
+function getMonthStart(date: Date): Date {
+    return new Date(date.getFullYear(), date.getMonth(), 1);
+}
+
+function addOneMonth(date: Date): Date {
+    return new Date(date.getFullYear(), date.getMonth() + 1, 1);
+}
+
+function monthKey(date: Date): string {
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+}
+
+function fillSeriesToToday(points: RatingTimeSeriesPoint[], step: FillStep): RatingTimeSeriesPoint[] {
+    if (points.length === 0) return points;
+
+    const sorted = [...points].sort(
+        (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+    );
+
+    const countsByMonth = new Map<string, { positive_count: number; negative_count: number }>();
+    for (const p of sorted) {
+        const bucket = getMonthStart(new Date(p.date));
+        const key = monthKey(bucket);
+        const existing = countsByMonth.get(key);
+        if (existing) {
+            existing.positive_count += p.positive_count;
+            existing.negative_count += p.negative_count;
+        } else {
+            countsByMonth.set(key, {
+                positive_count: p.positive_count,
+                negative_count: p.negative_count,
+            });
+        }
+    }
+
+    const start = getMonthStart(new Date(sorted[0].date));
+    const end = getMonthStart(new Date());
+    const filled: RatingTimeSeriesPoint[] = [];
+
+    if (step === "month") {
+        for (let cursor = new Date(start); cursor <= end; cursor = addOneMonth(cursor)) {
+            const key = monthKey(cursor);
+            const counts = countsByMonth.get(key);
+            filled.push({
+                date: cursor.toISOString(),
+                positive_count: counts?.positive_count ?? 0,
+                negative_count: counts?.negative_count ?? 0,
+            });
+        }
+    }
+
+    return filled;
+}
 
 export default function RatingsChart({ websiteId }: Props) {
     const [data, setData] = useState<RatingTimeSeriesPoint[]>([]);
-    const [granularity, setGranularity] = useState<Granularity>("monthly");
+    const [granularity, setGranularity] = useState<ExtendedGranularity>("monthly");
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -58,13 +115,32 @@ export default function RatingsChart({ websiteId }: Props) {
             });
     }, [websiteId, granularity]);
 
+    const fullSeriesData =
+        granularity === "yearly" || granularity === "all"
+            ? fillSeriesToToday(data, "month")
+            : data;
+
+    const yearlyWindowStartIndex =
+        granularity === "yearly"
+            ? Math.max(0, fullSeriesData.length - 12)
+            : 0;
+
+    const displayData =
+        granularity === "yearly"
+            ? fullSeriesData.slice(yearlyWindowStartIndex)
+            : fullSeriesData;
+
     // Format dates for the X-axis labels
-    const labels = data.map((point) => {
+    const labels = displayData.map((point) => {
         const d = new Date(point.date);
         if (granularity === "daily") {
             return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
         } else if (granularity === "weekly") {
             return "Week of " + d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+        } else if (granularity === "monthly") {
+            return d.toLocaleDateString("en-US", { month: "short", year: "numeric" });
+        } else if (granularity === "yearly") {
+            return d.toLocaleDateString("en-US", { month: "short", year: "numeric" });
         } else {
             return d.toLocaleDateString("en-US", { month: "short", year: "numeric" });
         }
@@ -73,14 +149,21 @@ export default function RatingsChart({ websiteId }: Props) {
     // Build cumulative totals so the line shows running totals over time
     let cumulativePositive = 0;
     let cumulativeNegative = 0;
-    const positiveValues = data.map((point) => {
+    const cumulativeSeries = fullSeriesData.map((point) => {
         cumulativePositive += point.positive_count;
-        return cumulativePositive;
-    });
-    const negativeValues = data.map((point) => {
         cumulativeNegative += point.negative_count;
-        return cumulativeNegative;
+        return {
+            positive: cumulativePositive,
+            negative: cumulativeNegative,
+        };
     });
+
+    const positiveValues = cumulativeSeries
+        .slice(yearlyWindowStartIndex)
+        .map((point) => point.positive);
+    const negativeValues = cumulativeSeries
+        .slice(yearlyWindowStartIndex)
+        .map((point) => point.negative);
 
     const chartData = {
         labels,
@@ -157,13 +240,19 @@ export default function RatingsChart({ websiteId }: Props) {
             <div className="ratings-chart-header">
                 <h2 className="website-card-title">Rating Trends</h2>
                 <div className="ratings-chart-toggle">
-                    {(["daily", "weekly", "monthly"] as Granularity[]).map((g) => (
+                    {([
+                        ["daily", "Daily"],
+                        ["weekly", "Weekly"],
+                        ["monthly", "Monthly"],
+                        ["yearly", "Yearly"],
+                        ["all", "All Time"],
+                    ] as Array<[ExtendedGranularity, string]>).map(([g, label]) => (
                         <button
                             key={g}
                             onClick={() => setGranularity(g)}
                             className={`chart-toggle-btn ${granularity === g ? "chart-toggle-active" : ""}`}
                         >
-                            {g.charAt(0).toUpperCase() + g.slice(1)}
+                            {label}
                         </button>
                     ))}
                 </div>

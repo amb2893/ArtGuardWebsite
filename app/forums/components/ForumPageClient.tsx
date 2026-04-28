@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { ForumPost, Comment } from "../../../lib/types";
 import CommentsList from "./CommentsList";
 import NewCommentForm from "./NewCommentForm";
@@ -12,9 +12,41 @@ interface Props {
 
 export default function ForumPageClient({ post, initialComments }: Props) {
     const [comments, setComments] = useState<Comment[]>(initialComments);
+    const [currentUsername, setCurrentUsername] = useState<string | null>(null);
+
+    useEffect(() => {
+        let cancelled = false;
+
+        async function loadMe() {
+            try {
+                const res = await fetch("/api/me", { cache: "no-store", credentials: "same-origin" });
+                if (!res.ok) return;
+
+                const data = (await res.json()) as { username?: string | null };
+                if (!cancelled) {
+                    setCurrentUsername(typeof data?.username === "string" ? data.username : null);
+                }
+            } catch {
+                if (!cancelled) setCurrentUsername(null);
+            }
+        }
+
+        loadMe();
+        return () => {
+            cancelled = true;
+        };
+    }, []);
 
     function handleNewComment(c: Comment) {
         setComments((prev) => [...prev, c]);
+    }
+
+    function handleUpdatedComment(updated: Comment) {
+        setComments((prev) => prev.map((c) => (c.id === updated.id ? updated : c)));
+    }
+
+    function handleDeletedComment(commentId: number) {
+        setComments((prev) => prev.filter((c) => c.id !== commentId));
     }
 
     return (
@@ -39,7 +71,12 @@ export default function ForumPageClient({ post, initialComments }: Props) {
             </section>
 
             <section className="forum-comments-list">
-                <CommentsList comments={comments} />
+                <CommentsList
+                    comments={comments}
+                    currentUsername={currentUsername}
+                    onUpdated={handleUpdatedComment}
+                    onDeleted={handleDeletedComment}
+                />
             </section>
         </div>
     );

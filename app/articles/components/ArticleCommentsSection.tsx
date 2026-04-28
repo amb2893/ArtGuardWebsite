@@ -11,6 +11,7 @@ interface Props {
 
 export default function ArticleCommentsSection({ articleId }: Props) {
     const [comments, setComments] = useState<ArticleComment[]>([]);
+    const [currentUsername, setCurrentUsername] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -41,8 +42,39 @@ export default function ArticleCommentsSection({ articleId }: Props) {
         };
     }, [articleId]);
 
+    useEffect(() => {
+        let cancelled = false;
+
+        async function loadMe() {
+            try {
+                const res = await fetch("/api/me", { cache: "no-store", credentials: "same-origin" });
+                if (!res.ok) return;
+
+                const data = (await res.json()) as { username?: string | null };
+                if (!cancelled) {
+                    setCurrentUsername(typeof data?.username === "string" ? data.username : null);
+                }
+            } catch {
+                if (!cancelled) setCurrentUsername(null);
+            }
+        }
+
+        loadMe();
+        return () => {
+            cancelled = true;
+        };
+    }, []);
+
     function handleNewComment(c: ArticleComment) {
         setComments((prev) => [...prev, c]);
+    }
+
+    function handleUpdatedComment(updated: ArticleComment) {
+        setComments((prev) => prev.map((c) => (c.id === updated.id ? updated : c)));
+    }
+
+    function handleDeletedComment(commentId: number) {
+        setComments((prev) => prev.filter((c) => c.id !== commentId));
     }
 
     return (
@@ -54,7 +86,14 @@ export default function ArticleCommentsSection({ articleId }: Props) {
             <div className="article-comments-body">
                 {loading && <div className="article-comments-muted">Loading comments...</div>}
                 {error && <div className="article-comments-error">{error}</div>}
-                {!loading && !error && <ArticleCommentsList comments={comments} />}
+                {!loading && !error && (
+                    <ArticleCommentsList
+                        comments={comments}
+                        currentUsername={currentUsername}
+                        onUpdated={handleUpdatedComment}
+                        onDeleted={handleDeletedComment}
+                    />
+                )}
             </div>
         </div>
     );

@@ -10,6 +10,7 @@ const pool = new Pool({
 });
 
 let accountsRoleColumnsReady = false;
+let articleModerationColumnsReady = false;
 
 async function ensureAccountsRoleColumns() {
   if (accountsRoleColumnsReady) return;
@@ -22,6 +23,34 @@ async function ensureAccountsRoleColumns() {
   );
 
   accountsRoleColumnsReady = true;
+}
+
+async function ensureArticleModerationColumns() {
+  if (articleModerationColumnsReady) return;
+
+  await pool.query(
+    "ALTER TABLE articles ADD COLUMN IF NOT EXISTS is_published BOOLEAN NOT NULL DEFAULT FALSE"
+  );
+  await pool.query(
+    "ALTER TABLE articles ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'Published'"
+  );
+  await pool.query(
+    "ALTER TABLE articles ADD COLUMN IF NOT EXISTS submitted_at TIMESTAMP NULL"
+  );
+  await pool.query(
+    "ALTER TABLE articles ADD COLUMN IF NOT EXISTS published_at TIMESTAMP NULL"
+  );
+
+  await pool.query(
+    `UPDATE articles
+     SET status = CASE
+       WHEN is_published = TRUE THEN 'Published'
+       ELSE 'Pending Review'
+     END
+     WHERE status IS NULL OR status NOT IN ('Pending Review', 'Published')`
+  );
+
+  articleModerationColumnsReady = true;
 }
 
 //Role check
@@ -158,6 +187,8 @@ export async function createPublishedArticle(
   blurb: string,
   difficulty: "Beginner" | "Intermediate" | "Advanced"
 ) {
+  await ensureArticleModerationColumns();
+
   const res = await pool.query(
     `
     INSERT INTO articles (author_id, title, body, blurb, difficulty, url, is_published, status, published_at, created_at, updated_at)
@@ -176,6 +207,8 @@ export async function createPendingArticle(
   blurb: string,
   difficulty: "Beginner" | "Intermediate" | "Advanced"
 ) {
+  await ensureArticleModerationColumns();
+
   const res = await pool.query(
     `
     INSERT INTO articles (author_id, title, body, blurb, difficulty, url, is_published, status, submitted_at, created_at, updated_at)
@@ -195,6 +228,8 @@ export async function notifyUser(userId: number, type: string, message: string, 
 }
 
 export async function getPendingArticles() {
+  await ensureArticleModerationColumns();
+
   const res = await pool.query(
     `
     SELECT ar.id, ar.author_id, a.username, ar.title, ar.blurb, ar.difficulty, ar.submitted_at, ar.created_at
@@ -208,6 +243,8 @@ export async function getPendingArticles() {
 }
 
 export async function getPendingArticleById(id: number) {
+  await ensureArticleModerationColumns();
+
   const res = await pool.query(
     `
     SELECT ar.id, ar.author_id, a.username, ar.title, ar.blurb, ar.body, ar.difficulty, ar.submitted_at, ar.created_at
@@ -222,6 +259,8 @@ export async function getPendingArticleById(id: number) {
 }
 
 export async function approvePendingArticle(articleId: number) {
+  await ensureArticleModerationColumns();
+
   const res = await pool.query(
     `
     UPDATE articles
@@ -238,6 +277,8 @@ export async function approvePendingArticle(articleId: number) {
 }
 
 export async function denyPendingArticle(articleId: number) {
+  await ensureArticleModerationColumns();
+
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
@@ -265,6 +306,8 @@ export async function denyPendingArticle(articleId: number) {
 }
 
 export async function getPendingArticlesCount(): Promise<number> {
+  await ensureArticleModerationColumns();
+
   const res = await pool.query(
     `SELECT COUNT(*)::int AS count FROM articles WHERE status = 'Pending Review'`
   );
@@ -318,6 +361,31 @@ export async function addArticleComment(articleId: number, authorId: number, bod
     const userRes = await pool.query("SELECT username FROM accounts WHERE id = $1", [authorId]);
     comment.username = userRes.rows[0]?.username ?? null;
     return comment;
+}
+
+export async function updateArticleComment(articleId: number, commentId: number, authorId: number, body: string) {
+    const res = await pool.query(
+      `UPDATE article_comments
+       SET body = $1
+       WHERE id = $2 AND article_id = $3 AND author_id = $4
+       RETURNING id, article_id, author_id, body, created_at`,
+      [body, commentId, articleId, authorId]
+    );
+
+    const comment = res.rows[0];
+    if (!comment) return null;
+
+    const userRes = await pool.query("SELECT username FROM accounts WHERE id = $1", [authorId]);
+    comment.username = userRes.rows[0]?.username ?? null;
+    return comment;
+}
+
+export async function deleteArticleComment(articleId: number, commentId: number, authorId: number) {
+    const res = await pool.query(
+      "DELETE FROM article_comments WHERE id = $1 AND article_id = $2 AND author_id = $3 RETURNING id",
+      [commentId, articleId, authorId]
+    );
+    return Boolean(res.rows[0]);
 }
 
 // Forums
@@ -408,6 +476,31 @@ export async function addComment(postId: number, authorId: number, body: string)
     return comment;
 }
 
+export async function updateComment(postId: number, commentId: number, authorId: number, body: string) {
+    const res = await pool.query(
+      `UPDATE comments
+       SET body = $1
+       WHERE id = $2 AND post_id = $3 AND author_id = $4
+       RETURNING id, post_id, author_id, body, created_at`,
+      [body, commentId, postId, authorId]
+    );
+
+    const comment = res.rows[0];
+    if (!comment) return null;
+
+    const userRes = await pool.query("SELECT username FROM accounts WHERE id = $1", [authorId]);
+    comment.username = userRes.rows[0]?.username ?? null;
+    return comment;
+}
+
+export async function deleteComment(postId: number, commentId: number, authorId: number) {
+    const res = await pool.query(
+      "DELETE FROM comments WHERE id = $1 AND post_id = $2 AND author_id = $3 RETURNING id",
+      [commentId, postId, authorId]
+    );
+    return Boolean(res.rows[0]);
+}
+
 export async function getWebsites(): Promise<Website[]> {
     const res = await pool.query(`
         SELECT 
@@ -479,7 +572,22 @@ export async function getRatingTimeSeries(websiteId: number, granularity: string
     daily: "day",
     weekly: "week",
     monthly: "month",
+    yearly: "year",
   };
+
+  if (granularity === "all") {
+    const res = await pool.query(
+      `SELECT
+          COALESCE(MIN(created_at), NOW()) AS date,
+          COUNT(CASE WHEN rating = 1 THEN 1 END)::int AS positive_count,
+          COUNT(CASE WHEN rating = -1 THEN 1 END)::int AS negative_count
+        FROM ratings
+        WHERE website_id = $1`,
+      [websiteId]
+    );
+    return res.rows;
+  }
+
   const interval = intervalMap[granularity] || "day";
 
   const res = await pool.query(
