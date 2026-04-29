@@ -1,5 +1,5 @@
-import React from "react";
 import Link from "next/link";
+import ReportButton from "../components/ReportButton";
 import { cookies } from "next/headers";
 import { verifyToken } from "../../lib/auth";
 import {
@@ -110,6 +110,8 @@ export default async function ArticlesPage() {
                 <Link className="article-link" href={`/articles/${a.id}`}>
                   Read full article
                 </Link>
+
+                <ReportButton contentType="article" contentId={a.id} authorId={a.author_id} authorUsername={a.username} />
               </div>
             </div>
           </article>

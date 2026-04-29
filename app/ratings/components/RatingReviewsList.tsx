@@ -1,17 +1,19 @@
 "use client";
 
-import React, { useState } from "react";
+import { useState } from "react";
 import { RatingReview } from "../../../lib/types";
 import ReviewTagSelector from "./ReviewTagSelector";
+import ReportButton from "../../components/ReportButton";
 
 interface Props {
     reviews: RatingReview[];
     currentUserId: number | null;
+    isAdmin: boolean;
     onUpdate: (reviewId: number, body: string, tags: string[]) => Promise<void>;
     onDelete: (reviewId: number) => Promise<void>;
 }
 
-export default function RatingReviewsList({ reviews, currentUserId, onUpdate, onDelete }: Props) {
+export default function RatingReviewsList({ reviews, currentUserId, isAdmin, onUpdate, onDelete }: Props) {
     const [editingId, setEditingId] = useState<number | null>(null);
     const [editingBody, setEditingBody] = useState("");
     const [editingTags, setEditingTags] = useState<string[]>([]);
@@ -51,13 +53,12 @@ export default function RatingReviewsList({ reviews, currentUserId, onUpdate, on
     }
 
     async function removeReview(reviewId: number) {
+        if (!confirm("Delete this review?")) return;
         setError(null);
         setWorking(true);
         try {
             await onDelete(reviewId);
-            if (editingId === reviewId) {
-                cancelEdit();
-            }
+            if (editingId === reviewId) cancelEdit();
         } catch (err) {
             setError("Could not delete review.");
         } finally {
@@ -70,82 +71,90 @@ export default function RatingReviewsList({ reviews, currentUserId, onUpdate, on
     return (
         <div className="rating-reviews-list">
             {error && <div className="rating-reviews-error">{error}</div>}
-            {reviews.map((r) => (
-                <div key={r.id} className="rating-review">
-                    <div className="rating-review-meta">
-                        <strong>{r.username ?? "Unknown"}</strong> - {new Date(r.created_at).toLocaleString()}
-                    </div>
-                    {editingId === r.id ? (
-                        <div className="rating-review-edit">
-                            <textarea
-                                value={editingBody}
-                                onChange={(e) => setEditingBody(e.target.value)}
-                                rows={4}
-                                className="rating-review-textarea"
-                                disabled={working}
-                                aria-label="Edit review"
-                            />
-                            <ReviewTagSelector
-                                selectedTags={editingTags}
-                                onChange={setEditingTags}
-                                disabled={working}
-                                idPrefix={`edit-review-tag-${r.id}`}
-                            />
-                            <div className="rating-review-actions">
-                                <button
-                                    type="button"
-                                    className="rating-review-action-btn"
-                                    onClick={() => saveEdit(r.id)}
-                                    disabled={working}
-                                >
-                                    {working ? "Saving..." : "Save"}
-                                </button>
-                                <button
-                                    type="button"
-                                    className="rating-review-action-btn rating-review-action-btn-secondary"
-                                    onClick={cancelEdit}
-                                    disabled={working}
-                                >
-                                    Cancel
-                                </button>
-                            </div>
+            {reviews.map((r) => {
+                const isOwner = currentUserId === r.author_id;
+                const canDelete = isOwner || isAdmin;
+
+                return (
+                    <div key={r.id} className="rating-review">
+                        <div className="rating-review-meta">
+                            <strong>{r.username ?? "Unknown"}</strong> - {new Date(r.created_at).toLocaleString()}
                         </div>
-                    ) : (
-                        <>
-                            <div className="rating-review-body">{r.body}</div>
-                            {Array.isArray(r.tags) && r.tags.length > 0 && (
-                                <div className="rating-review-tag-list" aria-label="Review tags">
-                                    {r.tags.map((tag) => (
-                                        <span key={`${r.id}-${tag}`} className="rating-review-tag-chip">
-                                            {tag}
-                                        </span>
-                                    ))}
-                                </div>
-                            )}
-                            {currentUserId === r.author_id && (
+                        {editingId === r.id ? (
+                            <div className="rating-review-edit">
+                                <textarea
+                                    value={editingBody}
+                                    onChange={(e) => setEditingBody(e.target.value)}
+                                    rows={4}
+                                    className="rating-review-textarea"
+                                    disabled={working}
+                                    aria-label="Edit review"
+                                />
+                                <ReviewTagSelector
+                                    selectedTags={editingTags}
+                                    onChange={setEditingTags}
+                                    disabled={working}
+                                    idPrefix={`edit-review-tag-${r.id}`}
+                                />
                                 <div className="rating-review-actions">
                                     <button
                                         type="button"
                                         className="rating-review-action-btn"
-                                        onClick={() => beginEdit(r)}
+                                        onClick={() => saveEdit(r.id)}
                                         disabled={working}
                                     >
-                                        Edit
+                                        {working ? "Saving..." : "Save"}
                                     </button>
                                     <button
                                         type="button"
-                                        className="rating-review-action-btn rating-review-action-btn-danger"
-                                        onClick={() => removeReview(r.id)}
+                                        className="rating-review-action-btn rating-review-action-btn-secondary"
+                                        onClick={cancelEdit}
                                         disabled={working}
                                     >
-                                        {working ? "Working..." : "Delete"}
+                                        Cancel
                                     </button>
                                 </div>
-                            )}
-                        </>
-                    )}
-                </div>
-            ))}
+                            </div>
+                        ) : (
+                            <>
+                                <div className="rating-review-body">{r.body}</div>
+                                {Array.isArray(r.tags) && r.tags.length > 0 && (
+                                    <div className="rating-review-tag-list" aria-label="Review tags">
+                                        {r.tags.map((tag) => (
+                                            <span key={`${r.id}-${tag}`} className="rating-review-tag-chip">
+                                                {tag}
+                                            </span>
+                                        ))}
+                                    </div>
+                                )}
+                                <div className="rating-review-actions">
+                                    {isOwner && (
+                                        <button
+                                            type="button"
+                                            className="rating-review-action-btn"
+                                            onClick={() => beginEdit(r)}
+                                            disabled={working}
+                                        >
+                                            Edit
+                                        </button>
+                                    )}
+                                    {canDelete && (
+                                        <button
+                                            type="button"
+                                            className="rating-review-action-btn rating-review-action-btn-danger"
+                                            onClick={() => removeReview(r.id)}
+                                            disabled={working}
+                                        >
+                                            {working ? "Working..." : "Delete"}
+                                        </button>
+                                    )}
+                                    <ReportButton contentType="review" contentId={r.id} authorId={r.author_id} authorUsername={r.username ?? undefined} />
+                                </div>
+                            </>
+                        )}
+                    </div>
+                );
+            })}
         </div>
     );
 }

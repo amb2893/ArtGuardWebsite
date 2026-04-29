@@ -16,9 +16,11 @@ export default function NavBar({ loggedIn, username }: Props) {
   const pathname = usePathname();
   const [currentUser, setCurrentUser] = useState<string | undefined | null>(username);
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(loggedIn);
+  const [isAdminUser, setIsAdminUser] = useState<boolean>(false);
   const isArticles = pathname?.startsWith("/articles");
   const isForums = pathname?.startsWith("/forums");
   const isRatings = pathname?.startsWith("/ratings");
+  const isAdmin = pathname?.startsWith("/admin");
 
   useEffect(() => {
     let mounted = true;
@@ -30,15 +32,18 @@ export default function NavBar({ loggedIn, username }: Props) {
         if (!res.ok) {
           setCurrentUser(undefined);
           setIsLoggedIn(false);
+          setIsAdminUser(false);
           return;
         }
         const json = await res.json();
         setCurrentUser(json?.username ?? undefined);
         setIsLoggedIn(Boolean(json?.username));
+        setIsAdminUser(Boolean(json?.isAdmin));
       } catch (err) {
         if (!mounted) return;
         setCurrentUser(undefined);
         setIsLoggedIn(false);
+        setIsAdminUser(false);
       }
     }
 
@@ -89,6 +94,11 @@ export default function NavBar({ loggedIn, username }: Props) {
         <Link href="/ratings" className="nav-link" aria-current={isRatings ? "page" : undefined}>
           RATINGS
         </Link>
+        {isLoggedIn && isAdminUser && (
+          <Link href="/admin" className="nav-link" aria-current={isAdmin ? "page" : undefined}>
+            ADMIN
+          </Link>
+        )}
       </div>
 
       <div className="navbar-right">

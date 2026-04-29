@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { RatingReview } from "../../../lib/types";
 import RatingReviewsList from "./RatingReviewsList";
 import NewRatingReviewForm from "./NewRatingReviewForm";
@@ -12,6 +12,7 @@ interface Props {
 
 export default function RatingReviewsSection({ websiteId, currentUserId }: Props) {
     const [reviews, setReviews] = useState<RatingReview[]>([]);
+    const [isAdmin, setIsAdmin] = useState(false);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -23,13 +24,10 @@ export default function RatingReviewsSection({ websiteId, currentUserId }: Props
             setError(null);
             try {
                 const res = await fetch(`/api/ratings/${websiteId}/reviews`, { credentials: "same-origin" });
-                if (!res.ok) {
-                    setError("Failed to load reviews.");
-                    return;
-                }
+                if (!res.ok) { setError("Failed to load reviews."); return; }
                 const data: RatingReview[] = await res.json();
                 if (!cancelled) setReviews(data);
-            } catch (err) {
+            } catch {
                 if (!cancelled) setError("Network error.");
             } finally {
                 if (!cancelled) setLoading(false);
@@ -37,10 +35,24 @@ export default function RatingReviewsSection({ websiteId, currentUserId }: Props
         }
 
         load();
-        return () => {
-            cancelled = true;
-        };
+        return () => { cancelled = true; };
     }, [websiteId]);
+
+    useEffect(() => {
+        let cancelled = false;
+
+        async function loadMe() {
+            try {
+                const res = await fetch("/api/me", { cache: "no-store", credentials: "same-origin" });
+                if (!res.ok) return;
+                const data = await res.json();
+                if (!cancelled) setIsAdmin(Boolean(data?.isAdmin));
+            } catch { /* not logged in */ }
+        }
+
+        loadMe();
+        return () => { cancelled = true; };
+    }, []);
 
     function handleNewReview(r: RatingReview) {
         setReviews((prev) => [...prev, r]);
@@ -53,13 +65,9 @@ export default function RatingReviewsSection({ websiteId, currentUserId }: Props
             credentials: "same-origin",
             body: JSON.stringify({ body, tags }),
         });
-
-        if (!res.ok) {
-            throw new Error("Failed to update review");
-        }
-
+        if (!res.ok) throw new Error("Failed to update review");
         const updated: RatingReview = await res.json();
-        setReviews((prev) => prev.map((review) => (review.id === reviewId ? updated : review)));
+        setReviews((prev) => prev.map((r) => (r.id === reviewId ? updated : r)));
     }
 
     async function handleDeleteReview(reviewId: number) {
@@ -67,12 +75,8 @@ export default function RatingReviewsSection({ websiteId, currentUserId }: Props
             method: "DELETE",
             credentials: "same-origin",
         });
-
-        if (!res.ok) {
-            throw new Error("Failed to delete review");
-        }
-
-        setReviews((prev) => prev.filter((review) => review.id !== reviewId));
+        if (!res.ok) throw new Error("Failed to delete review");
+        setReviews((prev) => prev.filter((r) => r.id !== reviewId));
     }
 
     return (
@@ -90,6 +94,7 @@ export default function RatingReviewsSection({ websiteId, currentUserId }: Props
                     <RatingReviewsList
                         reviews={reviews}
                         currentUserId={currentUserId}
+                        isAdmin={isAdmin}
                         onUpdate={handleUpdateReview}
                         onDelete={handleDeleteReview}
                     />

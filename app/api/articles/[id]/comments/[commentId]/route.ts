@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { deleteArticleComment, updateArticleComment } from "../../../../../../lib/db";
+import { deleteArticleComment, updateArticleComment, adminDeleteContent, isAdmin } from "../../../../../../lib/db";
 import { verifyToken } from "../../../../../../lib/auth";
 import { apiErrorResponse } from "../../../../../../lib/apiErrors";
 
@@ -64,7 +64,10 @@ export async function DELETE(
     const user = verifyToken(token);
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const deleted = await deleteArticleComment(id, commentId, user.id);
+    const userIsAdmin = await isAdmin(user.id);
+    const deleted = userIsAdmin
+      ? await adminDeleteContent("article_comment", commentId)
+      : await deleteArticleComment(id, commentId, user.id);
     if (!deleted) {
       return NextResponse.json({ error: "Comment not found or forbidden" }, { status: 404 });
     }

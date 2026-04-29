@@ -11,7 +11,7 @@ const JWT_SECRET = process.env.JWT_SECRET || "s^aiBI%C#{(Y2zr3!@#5+8&L9$Xwqv";
 
 export async function authenticateUser(username: string, password: string): Promise<User | null> {
     const res = await pool.query(
-        "SELECT id, username, password_hash FROM accounts WHERE username = $1",
+        "SELECT id, username, password_hash, is_banned FROM accounts WHERE username = $1",
         [username]
     );
 
@@ -20,6 +20,12 @@ export async function authenticateUser(username: string, password: string): Prom
     const userRow = res.rows[0];
     const match = await bcrypt.compare(password, userRow.password_hash);
     if (!match) return null;
+
+    if (userRow.is_banned) {
+        const err: any = new Error("ACCOUNT_BANNED");
+        err.code = "ACCOUNT_BANNED";
+        throw err;
+    }
 
     return { id: userRow.id, username: userRow.username };
 }

@@ -1,7 +1,10 @@
-import React from "react";
 import { notFound } from "next/navigation";
-import { getPublishedArticleById } from "../../../lib/db";
+import { cookies } from "next/headers";
+import { verifyToken } from "../../../lib/auth";
+import { getPublishedArticleById, isAdmin } from "../../../lib/db";
 import ArticleCommentsSection from "../components/ArticleCommentsSection";
+import ReportButton from "../../components/ReportButton";
+import ArticleAdminActions from "../components/ArticleAdminActions";
 
 function difficultyClass(d: string) {
   if (d === "Beginner") return "difficulty-badge is-beginner";
@@ -21,6 +24,11 @@ export default async function ArticleDetailPage({
   const article = await getPublishedArticleById(id);
   if (!article) return notFound();
 
+  const cookieStore = await cookies();
+  const token = cookieStore.get("token")?.value;
+  const user = token ? verifyToken(token) : null;
+  const admin = user ? await isAdmin(user.id) : false;
+
   return (
     <div style={{ padding: 40 }}>
       <h1>{article.title}</h1>
@@ -38,6 +46,11 @@ export default async function ArticleDetailPage({
       )}
 
       <div style={{ whiteSpace: "pre-wrap", marginTop: 16 }}>{article.body}</div>
+
+      <div style={{ marginTop: 12 }}>
+        <ReportButton contentType="article" contentId={article.id} authorId={article.author_id} authorUsername={article.author} />
+        {admin && <ArticleAdminActions articleId={article.id} />}
+      </div>
 
       <div style={{ marginTop: 32 }}>
         <ArticleCommentsSection articleId={article.id} />

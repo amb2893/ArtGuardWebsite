@@ -1,16 +1,18 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Comment } from "../../../lib/types";
+import ReportButton from "../../components/ReportButton";
 
 interface Props {
     comments: Comment[];
     currentUsername: string | null;
+    isAdmin: boolean;
     onUpdated: (c: Comment) => void;
     onDeleted: (commentId: number) => void;
 }
 
-export default function CommentsList({ comments, currentUsername, onUpdated, onDeleted }: Props) {
+export default function CommentsList({ comments, currentUsername, isAdmin, onUpdated, onDeleted }: Props) {
     const normalizedCurrentUsername = useMemo(
         () => (typeof currentUsername === "string" ? currentUsername.trim().toLowerCase() : ""),
         [currentUsername]
@@ -24,9 +26,13 @@ export default function CommentsList({ comments, currentUsername, onUpdated, onD
         return <div className="forum-comments-empty">No comments yet.</div>;
     }
 
-    function canEdit(comment: Comment): boolean {
+    function isOwner(comment: Comment): boolean {
         if (!normalizedCurrentUsername) return false;
         return (comment.username ?? "").trim().toLowerCase() === normalizedCurrentUsername;
+    }
+
+    function canDelete(comment: Comment): boolean {
+        return isOwner(comment) || isAdmin;
     }
 
     function startEdit(comment: Comment) {
@@ -139,24 +145,29 @@ export default function CommentsList({ comments, currentUsername, onUpdated, onD
                         <div className="forum-comment-body">{c.body}</div>
                     )}
 
-                    {canEdit(c) && editingId !== c.id && (
+                    {editingId !== c.id && (
                         <div className="forum-comment-actions">
-                            <button
-                                type="button"
-                                className="forum-comment-action-btn-secondary"
-                                onClick={() => startEdit(c)}
-                                disabled={busyId === c.id}
-                            >
-                                Edit
-                            </button>
-                            <button
-                                type="button"
-                                className="forum-comment-action-btn-danger"
-                                onClick={() => removeComment(c)}
-                                disabled={busyId === c.id}
-                            >
-                                {busyId === c.id ? "Deleting..." : "Delete"}
-                            </button>
+                            {isOwner(c) && (
+                                <button
+                                    type="button"
+                                    className="forum-comment-action-btn-secondary"
+                                    onClick={() => startEdit(c)}
+                                    disabled={busyId === c.id}
+                                >
+                                    Edit
+                                </button>
+                            )}
+                            {canDelete(c) && (
+                                <button
+                                    type="button"
+                                    className="forum-comment-action-btn-danger"
+                                    onClick={() => removeComment(c)}
+                                    disabled={busyId === c.id}
+                                >
+                                    {busyId === c.id ? "Deleting..." : "Delete"}
+                                </button>
+                            )}
+                            <ReportButton contentType="forum_comment" contentId={c.id} authorId={c.author_id} authorUsername={c.username ?? undefined} />
                         </div>
                     )}
 
