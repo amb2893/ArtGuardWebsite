@@ -4,6 +4,7 @@ import { useState } from "react";
 import { RatingReview } from "../../../lib/types";
 import ReviewTagSelector from "./ReviewTagSelector";
 import ReportButton from "../../components/ReportButton";
+import UserBadge from "../../components/UserBadge";
 
 interface Props {
     reviews: RatingReview[];
@@ -77,8 +78,10 @@ export default function RatingReviewsList({ reviews, currentUserId, isAdmin, onU
 
                 return (
                     <div key={r.id} className="rating-review">
-                        <div className="rating-review-meta">
-                            <strong>{r.username ?? "Unknown"}</strong> - {new Date(r.created_at).toLocaleString()}
+                        <div className="rating-review-meta" style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                            <strong>{r.username ?? "Unknown"}</strong>
+                            <UserBadge isAdmin={r.is_admin} isTrusted={r.is_trusted} />
+                            <span>- {new Date(r.created_at).toLocaleString()}</span>
                         </div>
                         {editingId === r.id ? (
                             <div className="rating-review-edit">

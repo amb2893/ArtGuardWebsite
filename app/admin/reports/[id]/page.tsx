@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { verifyToken } from "../../../../lib/auth";
 import { isAdmin, getReportById, getReportedContent, getReportsAgainstUser } from "../../../../lib/db";
 import ReportActions from "./ReportActions";
+import ReopenButton from "../../case-history/ReopenButton";
 
 const TYPE_LABELS: Record<string, string> = {
   user: "User",
@@ -252,10 +253,13 @@ export default async function AdminReportDetailPage({
               : ""}
           </p>
           {report.resolution_note && (
-            <p style={{ color: "var(--color-text-secondary)", marginTop: 6 }}>
+            <p style={{ color: "var(--color-text-secondary)", marginTop: 6, marginBottom: 12 }}>
               {report.resolution_note}
             </p>
           )}
+          <div style={{ marginTop: 12 }}>
+            <ReopenButton reportId={report.id} />
+          </div>
         </div>
       )}
     </div>

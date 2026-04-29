@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import "../styles/globals.css";
-import PopularThreads from "./components/PopularThreads";
+import FeaturedArticles from "./components/FeaturedArticles";
 import PopularWebsites from "./components/PopularWebsites";
 
 export default function HomePage() {
@@ -81,7 +81,7 @@ export default function HomePage() {
             </div>
 
             <div className="popular-content-section">
-                <PopularThreads />
+                <FeaturedArticles />
                 <PopularWebsites />
             </div>
         </>

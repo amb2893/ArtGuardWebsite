@@ -1,4 +1,3 @@
-import React from "react";
 import Link from "next/link";
 import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
@@ -65,6 +64,7 @@ export default async function AdminHubPage() {
             <span className="admin-hub-badge admin-hub-badge-red">{reportsCount} open</span>
           )}
         </Link>
+
       </div>
     </div>
   );

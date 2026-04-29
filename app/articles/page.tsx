@@ -9,6 +9,7 @@ import {
   isTrusted,
   getPendingArticlesCount,
 } from "../../lib/db";
+import UserBadge from "../components/UserBadge";
 
 function difficultyClass(d: string) {
   if (d === "Beginner") return "difficulty-badge is-beginner";
@@ -73,7 +74,7 @@ export default async function ArticlesPage() {
               <div className="featured-card-body">{a.blurb}</div>
 
               <div className="featured-card-meta">
-                <span>By {a.author}</span>
+                <span style={{ display: "flex", alignItems: "center", gap: 5 }}>By {a.author} <UserBadge isAdmin={a.is_admin} isTrusted={a.is_trusted} /></span>
                 <span>{a.comment_count} comment{a.comment_count === 1 ? "" : "s"}</span>
                 <span className="featured-card-cta">Read →</span>
               </div>
@@ -94,8 +95,9 @@ export default async function ArticlesPage() {
                 <span className={difficultyClass(a.difficulty)}>{a.difficulty}</span>
               </div>
 
-              <div className="article-comments-muted" style={{ marginBottom: "0.6rem" }}>
+              <div className="article-comments-muted" style={{ marginBottom: "0.6rem", display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
                 By <strong>{a.username}</strong>
+                <UserBadge isAdmin={a.is_admin} isTrusted={a.is_trusted} />
                 {" • "}
                 {a.published_at ? new Date(a.published_at).toLocaleDateString() : "Unpublished"}
               </div>

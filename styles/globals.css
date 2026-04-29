@@ -894,6 +894,7 @@ form button {
     font-size: 0.92rem;
     display: -webkit-box;
     -webkit-line-clamp: 2;
+    line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
 }
@@ -2491,6 +2492,7 @@ form button {
   font-size: 0.95rem;
   display: -webkit-box;
   -webkit-line-clamp: 3;
+  line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
   min-height: 3.9em;
@@ -3091,21 +3093,45 @@ form button {
 }
 
 .admin-role-badge-admin {
+  background: var(--color-error-light);
+  color: var(--color-primary);
+  border: 1px solid #fecdd3;
+}
+
+.admin-role-badge-trusted {
   background: #eff6ff;
   color: #1d4ed8;
   border: 1px solid #bfdbfe;
 }
 
-.admin-role-badge-trusted {
-  background: #ecfdf5;
-  color: #047857;
-  border: 1px solid #a7f3d0;
+.user-badge {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  vertical-align: middle;
+  line-height: 1.6;
+}
+
+.user-badge-admin {
+  background: var(--color-error-light);
+  color: var(--color-primary);
+  border: 1px solid #fecdd3;
+}
+
+.user-badge-trusted {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
 }
 
 .admin-role-badge-banned {
-  background: #fff1f2;
-  color: #be123c;
-  border: 1px solid #fecdd3;
+  background: #fff7ed;
+  color: #c2410c;
+  border: 1px solid #fed7aa;
 }
 
 /* ==========================

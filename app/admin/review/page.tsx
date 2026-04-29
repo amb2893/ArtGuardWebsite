@@ -30,6 +30,10 @@ export default async function AdminReviewPage() {
           <h1 className="articles-title">Pending Review</h1>
           <p className="articles-subtitle">Articles submitted by trusted writers.</p>
         </div>
+        <div style={{ alignSelf: "flex-start", display: "flex", gap: 16 }}>
+          <Link href="/articles" className="article-link">← Articles</Link>
+          <Link href="/admin" className="article-link">← Admin Hub</Link>
+        </div>
       </header>
 
       <section className="articles-list">

@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { ArticleComment } from "../../../lib/types";
 import ReportButton from "../../components/ReportButton";
+import UserBadge from "../../components/UserBadge";
 
 interface Props {
     comments: ArticleComment[];
@@ -108,8 +109,10 @@ export default function ArticleCommentsList({ comments, currentUsername, isAdmin
         <div className="article-comments-list">
             {comments.map((c) => (
                 <div key={c.id} className="article-comment">
-                    <div className="article-comment-meta">
-                        <strong>{c.username ?? "Unknown"}</strong> - {new Date(c.created_at).toLocaleString()}
+                    <div className="article-comment-meta" style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                        <strong>{c.username ?? "Unknown"}</strong>
+                        <UserBadge isAdmin={c.is_admin} isTrusted={c.is_trusted} />
+                        <span>- {new Date(c.created_at).toLocaleString()}</span>
                     </div>
 
                     {editingId === c.id ? (

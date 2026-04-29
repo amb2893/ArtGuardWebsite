@@ -5,6 +5,7 @@ import { getPublishedArticleById, isAdmin } from "../../../lib/db";
 import ArticleCommentsSection from "../components/ArticleCommentsSection";
 import ReportButton from "../../components/ReportButton";
 import ArticleAdminActions from "../components/ArticleAdminActions";
+import UserBadge from "../../components/UserBadge";
 
 function difficultyClass(d: string) {
   if (d === "Beginner") return "difficulty-badge is-beginner";
@@ -35,7 +36,7 @@ export default async function ArticleDetailPage({
 
       {/* difficulty below title */}
       <div style={{ marginTop: 10, display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
-        <span style={{ color: "#64748b", fontWeight: 600 }}>By {article.author}</span>
+        <span style={{ color: "#64748b", fontWeight: 600, display: "flex", alignItems: "center", gap: 6 }}>By {article.author} <UserBadge isAdmin={article.author_is_admin} isTrusted={article.author_is_trusted} /></span>
         <span className={difficultyClass(article.difficulty)}>{article.difficulty}</span>
       </div>
 

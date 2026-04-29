@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyToken } from "../../../../../../lib/auth";
-import { isAdmin, banUser, unbanUser, deleteUserContent } from "../../../../../../lib/db";
+import { isAdmin, banUser, unbanUser, deleteUserContent, resolveReportsByBannedUser } from "../../../../../../lib/db";
 
 export const runtime = "nodejs";
 
@@ -29,6 +29,7 @@ export async function POST(
   const ok = await banUser(id);
   if (!ok) return NextResponse.json({ error: "User not found or is an admin" }, { status: 404 });
 
+  await resolveReportsByBannedUser(id, admin.id);
   await deleteUserContent(id);
 
   return NextResponse.json({ success: true });

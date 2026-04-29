@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import NavbarNotifications from "./NavBarNotifications";
 
@@ -109,7 +109,7 @@ export default function NavBar({ loggedIn, username }: Props) {
 
             <span className="username">Hello, {currentUser}</span>
             <Link href="/logout" className="button secondary">
-              Logout
+              LOGOUT
             </Link>
           </>
         ) : (
