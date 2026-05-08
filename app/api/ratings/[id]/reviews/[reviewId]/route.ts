@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { deleteRatingReview, updateRatingReview } from "../../../../../../lib/db";
+import { deleteRatingReview, updateRatingReview, adminDeleteContent, isAdmin } from "../../../../../../lib/db";
 import { verifyToken } from "../../../../../../lib/auth";
 import { normalizeReviewTags } from "../../../../../../lib/reviewTags";
 import { apiErrorResponse } from "../../../../../../lib/apiErrors";
@@ -63,7 +63,10 @@ export async function DELETE(
     const user = verifyToken(token);
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const deleted = await deleteRatingReview(reviewId, websiteId, user.id);
+    const userIsAdmin = await isAdmin(user.id);
+    const deleted = userIsAdmin
+      ? await adminDeleteContent("review", reviewId)
+      : await deleteRatingReview(reviewId, websiteId, user.id);
     if (!deleted) {
       return NextResponse.json({ error: "Review not found or not owned by user" }, { status: 404 });
     }

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { ArticleComment } from "../../../lib/types";
 import ArticleCommentsList from "./ArticleCommentsList";
 import NewArticleCommentForm from "./NewArticleCommentForm";
@@ -12,6 +12,7 @@ interface Props {
 export default function ArticleCommentsSection({ articleId }: Props) {
     const [comments, setComments] = useState<ArticleComment[]>([]);
     const [currentUsername, setCurrentUsername] = useState<string | null>(null);
+    const [isAdmin, setIsAdmin] = useState(false);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -37,9 +38,7 @@ export default function ArticleCommentsSection({ articleId }: Props) {
         }
 
         load();
-        return () => {
-            cancelled = true;
-        };
+        return () => { cancelled = true; };
     }, [articleId]);
 
     useEffect(() => {
@@ -49,10 +48,10 @@ export default function ArticleCommentsSection({ articleId }: Props) {
             try {
                 const res = await fetch("/api/me", { cache: "no-store", credentials: "same-origin" });
                 if (!res.ok) return;
-
-                const data = (await res.json()) as { username?: string | null };
+                const data = await res.json();
                 if (!cancelled) {
                     setCurrentUsername(typeof data?.username === "string" ? data.username : null);
+                    setIsAdmin(Boolean(data?.isAdmin));
                 }
             } catch {
                 if (!cancelled) setCurrentUsername(null);
@@ -60,9 +59,7 @@ export default function ArticleCommentsSection({ articleId }: Props) {
         }
 
         loadMe();
-        return () => {
-            cancelled = true;
-        };
+        return () => { cancelled = true; };
     }, []);
 
     function handleNewComment(c: ArticleComment) {
@@ -90,6 +87,7 @@ export default function ArticleCommentsSection({ articleId }: Props) {
                     <ArticleCommentsList
                         comments={comments}
                         currentUsername={currentUsername}
+                        isAdmin={isAdmin}
                         onUpdated={handleUpdatedComment}
                         onDeleted={handleDeletedComment}
                     />

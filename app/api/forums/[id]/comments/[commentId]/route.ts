@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { deleteComment, updateComment } from "../../../../../../lib/db";
+import { deleteComment, updateComment, adminDeleteContent, isAdmin } from "../../../../../../lib/db";
 import { verifyToken } from "../../../../../../lib/auth";
 import { apiErrorResponse } from "../../../../../../lib/apiErrors";
+
+export const runtime = "nodejs";
 
 export async function PUT(
   req: NextRequest,
@@ -62,7 +64,10 @@ export async function DELETE(
     const user = verifyToken(token);
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const deleted = await deleteComment(id, commentId, user.id);
+    const userIsAdmin = await isAdmin(user.id);
+    const deleted = userIsAdmin
+      ? await adminDeleteContent("forum_comment", commentId)
+      : await deleteComment(id, commentId, user.id);
     if (!deleted) {
       return NextResponse.json({ error: "Comment not found or forbidden" }, { status: 404 });
     }

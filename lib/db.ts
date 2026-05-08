@@ -21,6 +21,9 @@ async function ensureAccountsRoleColumns() {
   await pool.query(
     "ALTER TABLE accounts ADD COLUMN IF NOT EXISTS is_trusted BOOLEAN NOT NULL DEFAULT FALSE"
   );
+  await pool.query(
+    "ALTER TABLE accounts ADD COLUMN IF NOT EXISTS is_banned BOOLEAN NOT NULL DEFAULT FALSE"
+  );
 
   accountsRoleColumnsReady = true;
 }
@@ -78,13 +81,16 @@ export async function getPublishedArticlesWithCounts() {
       ar.difficulty,
       ar.created_at,
       ar.published_at,
+      ar.author_id,
       a.username,
+      a.is_admin,
+      a.is_trusted,
       COUNT(ac.id)::int AS comment_count
     FROM articles ar
     JOIN accounts a ON a.id = ar.author_id
     LEFT JOIN article_comments ac ON ac.article_id = ar.id
     WHERE ar.is_published = TRUE
-    GROUP BY ar.id, a.username
+    GROUP BY ar.id, a.username, a.is_admin, a.is_trusted
     ORDER BY ar.published_at DESC NULLS LAST, ar.created_at DESC
   `.trim();
 
@@ -102,13 +108,16 @@ export async function getFeaturedArticles() {
         ar.difficulty,
         ar.published_at,
         ar.created_at,
+        ar.author_id,
         a.username AS author,
+        a.is_admin,
+        a.is_trusted,
         COUNT(ac.id)::int AS comment_count
       FROM articles ar
       JOIN accounts a ON a.id = ar.author_id
       LEFT JOIN article_comments ac ON ac.article_id = ar.id
       WHERE ar.is_published = TRUE
-      GROUP BY ar.id, a.username
+      GROUP BY ar.id, a.username, a.is_admin, a.is_trusted
       ORDER BY ar.published_at DESC NULLS LAST, ar.created_at DESC
       LIMIT 3
     ),
@@ -120,13 +129,16 @@ export async function getFeaturedArticles() {
         ar.difficulty,
         ar.published_at,
         ar.created_at,
+        ar.author_id,
         a.username AS author,
+        a.is_admin,
+        a.is_trusted,
         COUNT(ac.id)::int AS comment_count
       FROM articles ar
       JOIN accounts a ON a.id = ar.author_id
       LEFT JOIN article_comments ac ON ac.article_id = ar.id
       WHERE ar.is_published = TRUE
-      GROUP BY ar.id, a.username
+      GROUP BY ar.id, a.username, a.is_admin, a.is_trusted
       ORDER BY COUNT(ac.id) DESC, ar.published_at DESC NULLS LAST, ar.created_at DESC
       LIMIT 3
     ),
@@ -146,7 +158,7 @@ export async function getFeaturedArticles() {
 
 export async function getArticleCommentsByArticle(articleId: number) {
     const res = await pool.query(
-        `SELECT ac.id, ac.article_id, ac.author_id, a.username, ac.body, ac.created_at
+        `SELECT ac.id, ac.article_id, ac.author_id, a.username, a.is_admin, a.is_trusted, ac.body, ac.created_at
          FROM article_comments ac
          JOIN accounts a ON ac.author_id = a.id
          WHERE ac.article_id = $1
@@ -169,7 +181,10 @@ export async function getPublishedArticleById(id: number) {
       ar.difficulty,
       ar.created_at,
       ar.published_at,
-      a.username AS author
+      ar.author_id,
+      a.username AS author,
+      a.is_admin AS author_is_admin,
+      a.is_trusted AS author_is_trusted
     FROM articles ar
     JOIN accounts a ON a.id = ar.author_id
     WHERE ar.id = $1 AND ar.is_published = TRUE
@@ -391,7 +406,7 @@ export async function deleteArticleComment(articleId: number, commentId: number,
 // Forums
 export async function getForumPosts() {
     const res = await pool.query(
-        `SELECT f.id, f.title, f.body, f.author_id, a.username, f.created_at
+        `SELECT f.id, f.title, f.body, f.author_id, a.username, a.is_admin, a.is_trusted, f.created_at
          FROM discussion_forum f
          JOIN accounts a ON f.author_id = a.id
          ORDER BY f.created_at DESC`
@@ -401,7 +416,7 @@ export async function getForumPosts() {
 
 export async function getForumPost(postId: number) {
     const res = await pool.query(
-        `SELECT f.id, f.title, f.body, f.author_id, a.username, f.created_at
+        `SELECT f.id, f.title, f.body, f.author_id, a.username, a.is_admin, a.is_trusted, f.created_at
          FROM discussion_forum f
          JOIN accounts a ON f.author_id = a.id
          WHERE f.id = $1`,
@@ -419,13 +434,21 @@ export async function createForumPost(authorId: number, title: string, body: str
     return res.rows[0];
 }
 
-// Update a forum post
-export async function updateForumPost(postId: number, title: string, body: string) {
+// Update a forum post (owner only — caller must pass authorId)
+export async function updateForumPost(postId: number, authorId: number, title: string, body: string) {
     const res = await pool.query(
-        "UPDATE discussion_forum SET title=$1, body=$2 WHERE id=$3 RETURNING *",
-        [title, body, postId]
+        "UPDATE discussion_forum SET title=$1, body=$2 WHERE id=$3 AND author_id=$4 RETURNING *",
+        [title, body, postId, authorId]
     );
-    return res.rows[0];
+    return res.rows[0] ?? null;
+}
+
+export async function deleteForumPost(postId: number, authorId: number): Promise<boolean> {
+    const res = await pool.query(
+        "DELETE FROM discussion_forum WHERE id=$1 AND author_id=$2 RETURNING id",
+        [postId, authorId]
+    );
+    return Boolean(res.rows[0]);
 }
 
 // Get popular forum threads (by comment count)
@@ -453,7 +476,7 @@ export async function getPopularForumThreads(limit: number = 5) {
 // Comments
 export async function getCommentsByPost(postId: number) {
     const res = await pool.query(
-        `SELECT c.id, c.post_id, c.author_id, a.username, c.body, c.created_at
+        `SELECT c.id, c.post_id, c.author_id, a.username, a.is_admin, a.is_trusted, c.body, c.created_at
          FROM comments c
          JOIN accounts a ON c.author_id = a.id
          WHERE c.post_id = $1
@@ -693,7 +716,7 @@ export async function getRatingReviewsByWebsite(websiteId: number) {
   await ensureRatingsReviewsTable();
 
     const res = await pool.query(
-        `SELECT rr.id, rr.website_id, rr.author_id, a.username, rr.body, rr.tags, rr.created_at
+        `SELECT rr.id, rr.website_id, rr.author_id, a.username, a.is_admin, a.is_trusted, rr.body, rr.tags, rr.created_at
          FROM ratings_reviews rr
          JOIN accounts a ON rr.author_id = a.id
          WHERE rr.website_id = $1
@@ -752,6 +775,278 @@ export async function deleteRatingReview(reviewId: number, websiteId: number, au
     [reviewId, websiteId, authorId]
   );
 
+  return Boolean(res.rows[0]);
+}
+
+// User management
+export async function getAllUsers() {
+  await ensureAccountsRoleColumns();
+  const res = await pool.query(`
+    SELECT id, username, is_admin, is_trusted, is_banned, created_at
+    FROM accounts
+    ORDER BY username ASC
+  `);
+  return res.rows;
+}
+
+export async function resolveReportsByBannedUser(userId: number, adminId: number): Promise<void> {
+  await ensureReportsTable();
+  await pool.query(`
+    UPDATE reports
+    SET status = 'resolved',
+        resolution_note = 'Auto-closed: user banned',
+        resolved_by = $2,
+        resolved_at = NOW()
+    WHERE status = 'open'
+      AND (
+        (content_type = 'user' AND content_id = $1)
+        OR (content_type = 'article'         AND content_id IN (SELECT id FROM articles         WHERE author_id = $1))
+        OR (content_type = 'article_comment' AND content_id IN (SELECT id FROM article_comments WHERE author_id = $1))
+        OR (content_type = 'forum_post'      AND content_id IN (SELECT id FROM discussion_forum WHERE author_id = $1))
+        OR (content_type = 'forum_comment'   AND content_id IN (SELECT id FROM comments         WHERE author_id = $1))
+        OR (content_type = 'review'          AND content_id IN (SELECT id FROM ratings_reviews  WHERE author_id = $1))
+      )
+  `, [userId, adminId]);
+}
+
+export async function deleteUserContent(userId: number): Promise<void> {
+  await pool.query("DELETE FROM ratings_reviews WHERE author_id = $1", [userId]);
+  await pool.query("DELETE FROM comments WHERE author_id = $1", [userId]);
+  await pool.query("DELETE FROM article_comments WHERE author_id = $1", [userId]);
+  await pool.query("DELETE FROM discussion_forum WHERE author_id = $1", [userId]);
+  await pool.query("DELETE FROM articles WHERE author_id = $1", [userId]);
+}
+
+export async function banUser(userId: number): Promise<boolean> {
+  await ensureAccountsRoleColumns();
+  const res = await pool.query(
+    "UPDATE accounts SET is_banned = TRUE WHERE id = $1 AND is_admin = FALSE RETURNING id",
+    [userId]
+  );
+  return Boolean(res.rows[0]);
+}
+
+export async function unbanUser(userId: number): Promise<boolean> {
+  await ensureAccountsRoleColumns();
+  const res = await pool.query(
+    "UPDATE accounts SET is_banned = FALSE WHERE id = $1 RETURNING id",
+    [userId]
+  );
+  return Boolean(res.rows[0]);
+}
+
+export async function getReportsAgainstUser(userId: number) {
+  await ensureReportsTable();
+  const res = await pool.query(`
+    SELECT r.id, r.content_type, r.content_id, r.reason, r.status, r.created_at,
+           a.username AS reporter_username
+    FROM reports r
+    JOIN accounts a ON r.reporter_id = a.id
+    WHERE r.content_type = 'user' AND r.content_id = $1
+    ORDER BY r.created_at DESC
+  `, [userId]);
+  return res.rows;
+}
+
+export async function setUserTrust(userId: number, trusted: boolean) {
+  await ensureAccountsRoleColumns();
+  const res = await pool.query(
+    `UPDATE accounts SET is_trusted = $1 WHERE id = $2 RETURNING id, username, is_trusted`,
+    [trusted, userId]
+  );
+  return res.rows[0] ?? null;
+}
+
+// Reports
+let reportsTableReady = false;
+
+async function ensureReportsTable() {
+  if (reportsTableReady) return;
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS reports (
+      id SERIAL PRIMARY KEY,
+      reporter_id INTEGER NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+      content_type TEXT NOT NULL,
+      content_id INTEGER NOT NULL,
+      reason TEXT NOT NULL,
+      status TEXT NOT NULL DEFAULT 'open',
+      resolution_note TEXT NULL,
+      resolved_by INTEGER NULL REFERENCES accounts(id) ON DELETE SET NULL,
+      created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+      resolved_at TIMESTAMP NULL,
+      CONSTRAINT reports_content_type_check CHECK (content_type IN ('user', 'article', 'article_comment', 'forum_post', 'forum_comment', 'review')),
+      CONSTRAINT reports_status_check CHECK (status IN ('open', 'resolved', 'dismissed'))
+    )
+  `);
+  await pool.query(`CREATE INDEX IF NOT EXISTS reports_status_idx ON reports(status, created_at DESC)`);
+  reportsTableReady = true;
+}
+
+export async function createReport(
+  reporterId: number,
+  contentType: string,
+  contentId: number,
+  reason: string
+) {
+  await ensureReportsTable();
+  const res = await pool.query(
+    `INSERT INTO reports (reporter_id, content_type, content_id, reason) VALUES ($1, $2, $3, $4) RETURNING id`,
+    [reporterId, contentType, contentId, reason]
+  );
+  return res.rows[0];
+}
+
+export async function getOpenReports() {
+  await ensureReportsTable();
+  const res = await pool.query(`
+    SELECT r.id, r.content_type, r.content_id, r.reason, r.status, r.created_at,
+           a.username AS reporter_username
+    FROM reports r
+    JOIN accounts a ON r.reporter_id = a.id
+    WHERE r.status = 'open'
+    ORDER BY r.created_at DESC
+  `);
+  return res.rows;
+}
+
+export async function getOpenReportsCount(): Promise<number> {
+  await ensureReportsTable();
+  const res = await pool.query(`SELECT COUNT(*)::int AS count FROM reports WHERE status = 'open'`);
+  return res.rows[0]?.count ?? 0;
+}
+
+export async function getReportById(id: number) {
+  await ensureReportsTable();
+  const res = await pool.query(`
+    SELECT r.id, r.reporter_id, r.content_type, r.content_id, r.reason, r.status,
+           r.resolution_note, r.created_at, r.resolved_at,
+           a.username AS reporter_username,
+           ra.username AS resolved_by_username
+    FROM reports r
+    JOIN accounts a ON r.reporter_id = a.id
+    LEFT JOIN accounts ra ON r.resolved_by = ra.id
+    WHERE r.id = $1
+    LIMIT 1
+  `, [id]);
+  return res.rows[0] ?? null;
+}
+
+export async function resolveReport(id: number, adminId: number, note: string) {
+  await ensureReportsTable();
+  const res = await pool.query(
+    `UPDATE reports SET status = 'resolved', resolution_note = $1, resolved_by = $2, resolved_at = NOW()
+     WHERE id = $3 AND status = 'open' RETURNING id`,
+    [note, adminId, id]
+  );
+  return res.rows[0] ?? null;
+}
+
+export async function getClosedReports() {
+  await ensureReportsTable();
+  const res = await pool.query(`
+    SELECT r.id, r.content_type, r.content_id, r.reason, r.status,
+           r.resolution_note, r.created_at, r.resolved_at,
+           a.username AS reporter_username,
+           ra.username AS resolved_by_username
+    FROM reports r
+    JOIN accounts a ON r.reporter_id = a.id
+    LEFT JOIN accounts ra ON r.resolved_by = ra.id
+    WHERE r.status IN ('resolved', 'dismissed')
+    ORDER BY r.resolved_at DESC NULLS LAST, r.created_at DESC
+  `);
+  return res.rows;
+}
+
+export async function reopenReport(id: number): Promise<boolean> {
+  await ensureReportsTable();
+  const res = await pool.query(
+    `UPDATE reports SET status = 'open', resolution_note = NULL, resolved_by = NULL, resolved_at = NULL
+     WHERE id = $1 AND status IN ('resolved', 'dismissed') RETURNING id`,
+    [id]
+  );
+  return Boolean(res.rows[0]);
+}
+
+export async function dismissReport(id: number, adminId: number) {
+  await ensureReportsTable();
+  const res = await pool.query(
+    `UPDATE reports SET status = 'dismissed', resolved_by = $1, resolved_at = NOW()
+     WHERE id = $2 AND status = 'open' RETURNING id`,
+    [adminId, id]
+  );
+  return res.rows[0] ?? null;
+}
+
+export async function getReportedContent(contentType: string, contentId: number) {
+  switch (contentType) {
+    case "article": {
+      const res = await pool.query(
+        `SELECT ar.id, ar.title, ar.blurb, ar.body, ar.status, ar.created_at, ar.author_id,
+                a.username AS author
+         FROM articles ar JOIN accounts a ON ar.author_id = a.id WHERE ar.id = $1`,
+        [contentId]
+      );
+      return res.rows[0] ?? null;
+    }
+    case "article_comment": {
+      const res = await pool.query(
+        `SELECT ac.id, ac.body, ac.created_at, ac.article_id, ac.author_id,
+                a.username AS author
+         FROM article_comments ac JOIN accounts a ON ac.author_id = a.id WHERE ac.id = $1`,
+        [contentId]
+      );
+      return res.rows[0] ?? null;
+    }
+    case "forum_post": {
+      const res = await pool.query(
+        `SELECT f.id, f.title, f.body, f.created_at, f.author_id,
+                a.username AS author
+         FROM discussion_forum f JOIN accounts a ON f.author_id = a.id WHERE f.id = $1`,
+        [contentId]
+      );
+      return res.rows[0] ?? null;
+    }
+    case "forum_comment": {
+      const res = await pool.query(
+        `SELECT c.id, c.body, c.created_at, c.post_id, c.author_id,
+                a.username AS author
+         FROM comments c JOIN accounts a ON c.author_id = a.id WHERE c.id = $1`,
+        [contentId]
+      );
+      return res.rows[0] ?? null;
+    }
+    case "review": {
+      const res = await pool.query(
+        `SELECT rr.id, rr.body, rr.tags, rr.created_at, rr.website_id, rr.author_id,
+                a.username AS author
+         FROM ratings_reviews rr JOIN accounts a ON rr.author_id = a.id WHERE rr.id = $1`,
+        [contentId]
+      );
+      return res.rows[0] ?? null;
+    }
+    case "user": {
+      const res = await pool.query(
+        `SELECT id, username, is_admin, is_trusted, is_banned, created_at FROM accounts WHERE id = $1`,
+        [contentId]
+      );
+      return res.rows[0] ?? null;
+    }
+    default:
+      return null;
+  }
+}
+
+export async function adminDeleteContent(contentType: string, contentId: number): Promise<boolean> {
+  const tableMap: Record<string, string> = {
+    article: "articles",
+    article_comment: "article_comments",
+    forum_post: "discussion_forum",
+    forum_comment: "comments",
+    review: "ratings_reviews",
+  };
+  const table = tableMap[contentType];
+  if (!table) return false;
+  const res = await pool.query(`DELETE FROM ${table} WHERE id = $1 RETURNING id`, [contentId]);
   return Boolean(res.rows[0]);
 }
 

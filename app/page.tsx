@@ -1,8 +1,9 @@
 "use client"; // must be the very first line
 
 import React, { useState } from "react";
+import Link from "next/link";
 import "../styles/globals.css";
-import PopularThreads from "./components/PopularThreads";
+import FeaturedArticles from "./components/FeaturedArticles";
 import PopularWebsites from "./components/PopularWebsites";
 
 export default function HomePage() {
@@ -21,8 +22,8 @@ export default function HomePage() {
                         review hosting sites based on your own experiences.
                     </p>
                     <div className="homepage-buttons">
-                        <button className="btn-primary">VISIT OUR FORUMS NOW</button>
-                        <button className="btn-secondary">LEAVE A REVIEW</button>
+                        <Link href="/forums" className="btn-primary">VISIT OUR FORUMS NOW</Link>
+                        <Link href="/ratings" className="btn-secondary">LEAVE A REVIEW</Link>
                     </div>
                 </div>
                 <div className="homepage-right">
@@ -32,32 +33,32 @@ export default function HomePage() {
                             <span className="live-badge">LIVE</span>
                         </div>
                         <div className="protection-content">
-                            <div className="protection-item">
+                            <Link href="/ratings" className="protection-item">
                                 <div className="protection-icon">📈</div>
                                 <div className="protection-text">
                                     <p className="protection-number">Website Reviews</p>
                                     <p className="protection-subtext">See how sites protect your art</p>
                                 </div>
                                 <div className="arrow">›</div>
-                            </div>
-                            <div className="protection-item threat">
+                            </Link>
+                            <Link href="/forums" className="protection-item threat">
                                 <div className="threat-icon">🔔</div>
                                 <div className="protection-text">
                                     <p className="protection-number">Join the Community</p>
                                     <p className="protection-subtext">Join discussions and share feedback</p>
                                 </div>
                                 <div className="arrow">›</div>
-                            </div>
-                            <div className="protection-item community">
+                            </Link>
+                            <Link href="/articles" className="protection-item community">
                                 <div className="community-icon">📚</div>
                                 <div className="protection-text">
                                     <p className="protection-number">Inform Yourself</p>
                                     <p className="protection-subtext">Read articles written by experts and trusted users</p>
                                 </div>
                                 <div className="arrow">›</div>
-                            </div>
+                            </Link>
                         </div>
-                        <button className="btn-dashboard">CREATE AN ACCOUNT NOW</button>
+                        <Link href="/signup" className="btn-dashboard">CREATE AN ACCOUNT NOW</Link>
                     </div>
                 </div>
             </div>
@@ -80,7 +81,7 @@ export default function HomePage() {
             </div>
 
             <div className="popular-content-section">
-                <PopularThreads />
+                <FeaturedArticles />
                 <PopularWebsites />
             </div>
         </>

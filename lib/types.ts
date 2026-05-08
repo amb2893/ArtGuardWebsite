@@ -27,6 +27,8 @@ export interface ForumPost {
     body: string;
     author_id: number;
     username: string;
+    is_admin?: boolean;
+    is_trusted?: boolean;
     created_at: string;
 }
 
@@ -35,6 +37,8 @@ export interface Comment {
     post_id: number;
     author_id: number;
     username?: string | null;
+    is_admin?: boolean;
+    is_trusted?: boolean;
     body: string;
     created_at: string;
 }
@@ -44,6 +48,8 @@ export interface ArticleComment {
     article_id: number;
     author_id: number;
     username?: string | null;
+    is_admin?: boolean;
+    is_trusted?: boolean;
     body: string;
     created_at: string;
 }
@@ -53,6 +59,8 @@ export interface RatingReview {
     website_id: number;
     author_id: number;
     username?: string | null;
+    is_admin?: boolean;
+    is_trusted?: boolean;
     body: string;
     tags: string[];
     created_at: string;

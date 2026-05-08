@@ -16,7 +16,15 @@ export async function POST(req: NextRequest) {
 
         console.log("/api/login attempt:", { username });
 
-        const user = await authenticateUser(username, password);
+        let user;
+        try {
+            user = await authenticateUser(username, password);
+        } catch (err: any) {
+            if (err?.code === "ACCOUNT_BANNED") {
+                return NextResponse.json({ error: "Your account has been banned." }, { status: 403 });
+            }
+            throw err;
+        }
 
         if (!user) {
             return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
